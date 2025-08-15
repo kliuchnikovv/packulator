@@ -1,0 +1,39 @@
+# Development files
+.env
+.env.local
+.env.example
+
+# Git
+.git
+.gitignore
+
+# Documentation
+README.md
+CLAUDE.md
+*.md
+
+# IDE
+.vscode
+.idea
+
+# Logs
+*.log
+
+# Test files
+*_test.go
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Dependencies
+vendor/
+
+# Build artifacts
+main
+packulator
+
+# Temporary files
+tmp/
+temp/

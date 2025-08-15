@@ -1,0 +1,28 @@
+// Project-local debug tasks
+//
+// For more documentation on how to configure debug tasks,
+// see: https://zed.dev/docs/debugger
+[
+  {
+    "label": "Debug",
+    "adapter": "Delve",
+    "type": "go",
+    "request": "launch",
+    "mode": "debug",
+    "program": "${ZED_WORKTREE_ROOT}/cmd/main.go",
+    "args": ["-debug"],
+    "env": {
+      "HOST": "0.0.0.0",
+      "PORT": "8080",
+      "DB_HOST": "localhost",
+      "DB_PORT": "5432",
+      "DB_USER": "packulator",
+      "DB_PASSWORD": "packulator123",
+      "DB_NAME": "packulator",
+      "DB_SSL_MODE": "disable",
+      "ENVIRONMENT": "production",
+      "LOG_LEVEL": "debug",
+      "DEBUG": "true"
+    }
+  }
+]
