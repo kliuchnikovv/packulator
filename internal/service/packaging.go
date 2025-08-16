@@ -41,6 +41,10 @@ func (s *service) NumberOfPacks(
 		})
 
 		for j, item := range invariant.PackItems {
+			if amount <= 0 {
+				break
+			}
+
 			var numberOfPacks = float64(amount) / float64(item.Size)
 
 			if j < len(invariant.PackItems)-1 {
@@ -49,7 +53,12 @@ func (s *service) NumberOfPacks(
 				}
 			}
 
-			result[item.Size] = int64(math.Round(numberOfPacks))
+			if numberOfPacks < 1 {
+				result[item.Size] = int64(math.Round(numberOfPacks))
+			} else {
+				result[item.Size] = int64(math.Floor(numberOfPacks))
+			}
+
 			amount -= result[item.Size] * item.Size
 		}
 
