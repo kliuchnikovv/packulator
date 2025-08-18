@@ -4,7 +4,7 @@ go 1.24.6
 
 require (
 	github.com/google/uuid v1.6.0
-	github.com/kliuchnikovv/engi v0.0.0-20250818132057-13915ce6f829
+	github.com/kliuchnikovv/engi v0.0.0-20250818162843-f1869cf425a7
 	github.com/stretchr/testify v1.9.0
 	go.opentelemetry.io/otel v1.30.0
 	gorm.io/driver/postgres v1.6.0
