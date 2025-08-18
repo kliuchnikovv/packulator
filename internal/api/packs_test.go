@@ -53,14 +53,6 @@ func (m *MockStore) DeletePack(ctx context.Context, id string) error {
 	return args.Error(0)
 }
 
-func (m *MockStore) GetLatestPackConfig(ctx context.Context) (*model.Pack, error) {
-	args := m.Called(ctx)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*model.Pack), args.Error(1)
-}
-
 func (m *MockStore) HealthCheck(ctx context.Context) error {
 	args := m.Called(ctx)
 	return args.Error(0)
@@ -323,53 +315,27 @@ func TestPacksAPI_ListPacks(t *testing.T) {
 		request := &MockRequest{}
 		response := &MockResponse{}
 		
-		latestPack := &model.Pack{
-			ID:          "pack-1",
-			VersionHash: "abc123",
-			TotalAmount: 250,
-			PackItems: []model.PackItem{
-				{ID: "item-1", PackID: "pack-1", Size: 250},
+		expectedPacks := []model.Pack{
+			{
+				ID:          "pack-1",
+				VersionHash: "abc123",
+				TotalAmount: 250,
+			},
+			{
+				ID:          "pack-2",
+				VersionHash: "def456",
+				TotalAmount: 500,
 			},
 		}
 		
-		expectedResponse := &model.PacksListResponse{
-			Packs:       []int64{250},
-			VersionHash: "abc123",
-		}
-		
-		mockStore.On("GetLatestPackConfig", ctx).Return(latestPack, nil)
-		response.On("OK", expectedResponse).Return(nil)
+		mockStore.On("ListPacks", ctx).Return(expectedPacks, nil)
+		response.On("OK", expectedPacks).Return(nil)
 		
 		err := api.ListPacks(ctx, request, response)
 		
 		require.NoError(t, err)
 		assert.Equal(t, 200, response.statusCode)
-		assert.Equal(t, expectedResponse, response.data)
-		
-		response.AssertExpectations(t)
-		mockStore.AssertExpectations(t)
-	})
-	
-	t.Run("no packs found", func(t *testing.T) {
-		mockStore := &MockStore{}
-		api := NewPacksAPI(mockStore)
-		ctx := context.Background()
-		
-		request := &MockRequest{}
-		response := &MockResponse{}
-		
-		expectedResponse := &model.PacksListResponse{
-			Packs:       []int64{},
-			VersionHash: "",
-		}
-		
-		mockStore.On("GetLatestPackConfig", ctx).Return(nil, store.ErrNotFound)
-		response.On("OK", expectedResponse).Return(nil)
-		
-		err := api.ListPacks(ctx, request, response)
-		
-		require.NoError(t, err)
-		assert.Equal(t, 200, response.statusCode)
+		assert.Equal(t, expectedPacks, response.data)
 		
 		response.AssertExpectations(t)
 		mockStore.AssertExpectations(t)
@@ -384,8 +350,8 @@ func TestPacksAPI_ListPacks(t *testing.T) {
 		response := &MockResponse{}
 		
 		expectedError := errors.New("database error")
-		mockStore.On("GetLatestPackConfig", ctx).Return(nil, expectedError)
-		response.On("InternalServerError", "can't get latest pack config: %s", mock.Anything).Return(expectedError)
+		mockStore.On("ListPacks", ctx).Return([]model.Pack{}, expectedError)
+		response.On("InternalServerError", "can't list packs: %s", mock.Anything).Return(expectedError)
 		
 		err := api.ListPacks(ctx, request, response)
 		

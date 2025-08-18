@@ -20,7 +20,6 @@ type Store interface {
 	SavePacks(ctx context.Context, packs []model.Pack, versionHash string) error
 	GetPackByID(ctx context.Context, id string) (*model.Pack, error)
 	ListPacks(ctx context.Context) ([]model.Pack, error)
-	GetLatestPackConfig(ctx context.Context) (*model.Pack, error)
 	DeletePack(ctx context.Context, id string) error
 	HealthCheck(ctx context.Context) error
 }
@@ -92,22 +91,6 @@ func (s *store) ListPacks(ctx context.Context) ([]model.Pack, error) {
 	var packs []model.Pack
 	err := s.db.WithContext(ctx).Preload("PackItems").Find(&packs).Error
 	return packs, err
-}
-
-func (s *store) GetLatestPackConfig(ctx context.Context) (*model.Pack, error) {
-	var pack model.Pack
-	err := s.db.WithContext(ctx).
-		Preload("PackItems").
-		Order("created_at DESC").
-		First(&pack).Error
-	
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, ErrNotFound
-		}
-		return nil, err
-	}
-	return &pack, nil
 }
 
 func (s *store) DeletePack(ctx context.Context, id string) error {
