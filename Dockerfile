@@ -1,11 +1,11 @@
-# Build stage
+# Backend-only Dockerfile
 FROM golang:1.24-alpine AS builder
 
 # Set working directory
 WORKDIR /app
 
-# Install git (required for private modules)
-RUN apk add --no-cache git
+# Install git
+RUN apk add --no-cache git ca-certificates
 
 # Copy go mod files
 COPY go.mod go.sum ./
@@ -22,20 +22,20 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main ./cmd/main.g
 # Final stage
 FROM alpine:latest
 
-# Install ca-certificates and wget for health checks
-RUN apk --no-cache add ca-certificates wget
+# Install ca-certificates and curl for health checks
+RUN apk --no-cache add ca-certificates curl
 
 # Create non-root user
 RUN addgroup -g 1001 -S appgroup && \
     adduser -u 1001 -S appuser -G appgroup
 
-WORKDIR /root/
+WORKDIR /app
 
 # Copy the binary from builder stage
 COPY --from=builder /app/main .
 
 # Change ownership of the binary
-RUN chown appuser:appgroup main
+RUN chown -R appuser:appgroup /app
 
 # Switch to non-root user
 USER appuser
@@ -44,8 +44,8 @@ USER appuser
 EXPOSE 8080
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:8080/health/check || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+  CMD curl -f http://localhost:8080/health/check || exit 1
 
 # Command to run
 CMD ["./main"]

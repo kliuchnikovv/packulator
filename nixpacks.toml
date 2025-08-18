@@ -1,10 +1,9 @@
-# Railway Nixpacks configuration
+# Railway Nixpacks configuration - Backend only
 [phases.setup]
-nixPkgs = ["nodejs_18", "go_1_24"]
+nixPkgs = ["go_1_24"]
 
 [phases.build]
 cmds = [
-    "cd frontend && npm ci --only=production && npm run build",
     "go mod download",
     "CGO_ENABLED=0 go build -o main ./cmd/main.go"
 ]
