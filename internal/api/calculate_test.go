@@ -116,7 +116,7 @@ func TestPackagingService_NumberOfPackages(t *testing.T) {
 		request.On("String", "packs_hash", mock.Anything).Return(versionHash)
 		
 		mockStore.On("GetPacksInvariantsByHash", ctx, versionHash).Return([]model.Pack{}, store.ErrNotFound)
-		response.On("NotFound", mock.Anything, mock.Anything).Return(store.ErrNotFound)
+		response.On("NotFound", "packs not found by hash: %s", mock.Anything).Return(store.ErrNotFound)
 		
 		err := api.NumberOfPackages(ctx, request, response)
 		
@@ -145,7 +145,7 @@ func TestPackagingService_NumberOfPackages(t *testing.T) {
 		request.On("String", "packs_hash", mock.Anything).Return(versionHash)
 		
 		mockStore.On("GetPacksInvariantsByHash", ctx, versionHash).Return([]model.Pack{}, expectedError)
-		response.On("InternalServerError", mock.Anything, mock.Anything).Return(expectedError)
+		response.On("InternalServerError", "failed to get packs: %s", mock.Anything).Return(expectedError)
 		
 		err := api.NumberOfPackages(ctx, request, response)
 		
@@ -361,7 +361,7 @@ func TestPackagingService_EdgeCases(t *testing.T) {
 		request.On("String", "packs_hash", mock.Anything).Return(versionHash)
 		
 		mockStore.On("GetPacksInvariantsByHash", ctx, versionHash).Return([]model.Pack{}, store.ErrNotFound)
-		response.On("NotFound", mock.Anything, mock.Anything).Return(store.ErrNotFound)
+		response.On("NotFound", "packs not found by hash: %s", mock.Anything).Return(store.ErrNotFound)
 		
 		err := api.NumberOfPackages(ctx, request, response)
 		

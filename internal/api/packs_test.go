@@ -53,6 +53,11 @@ func (m *MockStore) DeletePack(ctx context.Context, id string) error {
 	return args.Error(0)
 }
 
+func (m *MockStore) HealthCheck(ctx context.Context) error {
+	args := m.Called(ctx)
+	return args.Error(0)
+}
+
 // Mock response for testing
 type MockResponse struct {
 	mock.Mock
@@ -82,25 +87,19 @@ func (m *MockResponse) NoContent() error {
 }
 
 func (m *MockResponse) BadRequest(format string, args ...interface{}) error {
-	mockArgs := []interface{}{format}
-	mockArgs = append(mockArgs, args...)
-	callArgs := m.Called(mockArgs...)
+	callArgs := m.Called(format, args)
 	m.statusCode = 400
 	return callArgs.Error(0)
 }
 
 func (m *MockResponse) NotFound(format string, args ...interface{}) error {
-	mockArgs := []interface{}{format}
-	mockArgs = append(mockArgs, args...)
-	callArgs := m.Called(mockArgs...)
+	callArgs := m.Called(format, args)
 	m.statusCode = 404
 	return callArgs.Error(0)
 }
 
 func (m *MockResponse) InternalServerError(format string, args ...interface{}) error {
-	mockArgs := []interface{}{format}
-	mockArgs = append(mockArgs, args...)
-	callArgs := m.Called(mockArgs...)
+	callArgs := m.Called(format, args)
 	m.statusCode = 500
 	return callArgs.Error(0)
 }
@@ -131,25 +130,19 @@ func (m *MockResponse) Error(code int, err error) error {
 }
 
 func (m *MockResponse) Errorf(code int, format string, args ...interface{}) error {
-	mockArgs := []interface{}{code, format}
-	mockArgs = append(mockArgs, args...)
-	callArgs := m.Called(mockArgs...)
+	callArgs := m.Called(code, format, args)
 	m.statusCode = code
 	return callArgs.Error(0)
 }
 
 func (m *MockResponse) Forbidden(format string, args ...interface{}) error {
-	mockArgs := []interface{}{format}
-	mockArgs = append(mockArgs, args...)
-	callArgs := m.Called(mockArgs...)
+	callArgs := m.Called(format, args)
 	m.statusCode = 403
 	return callArgs.Error(0)
 }
 
 func (m *MockResponse) MethodNotAllowed(format string, args ...interface{}) error {
-	mockArgs := []interface{}{format}
-	mockArgs = append(mockArgs, args...)
-	callArgs := m.Called(mockArgs...)
+	callArgs := m.Called(format, args)
 	m.statusCode = 405
 	return callArgs.Error(0)
 }
@@ -275,7 +268,7 @@ func TestPacksAPI_CreatePacks(t *testing.T) {
 		}
 		
 		request.On("Body").Return(requestBody)
-		response.On("InternalServerError", mock.Anything).Return(errors.New("packs can't be empty"))
+		response.On("InternalServerError", "packs can't be empty", mock.Anything).Return(errors.New("packs can't be empty"))
 		
 		err := api.CreatePacks(ctx, request, response)
 		
@@ -300,7 +293,7 @@ func TestPacksAPI_CreatePacks(t *testing.T) {
 		
 		request.On("Body").Return(requestBody)
 		mockStore.On("SavePacks", ctx, mock.AnythingOfType("[]model.Pack"), mock.AnythingOfType("string")).Return(errors.New("database error"))
-		response.On("InternalServerError", mock.Anything, mock.Anything).Return(errors.New("can't create packs"))
+		response.On("InternalServerError", "can't create packs: %s", mock.Anything).Return(errors.New("can't create packs"))
 		
 		err := api.CreatePacks(ctx, request, response)
 		
@@ -358,7 +351,7 @@ func TestPacksAPI_ListPacks(t *testing.T) {
 		
 		expectedError := errors.New("database error")
 		mockStore.On("ListPacks", ctx).Return([]model.Pack{}, expectedError)
-		response.On("InternalServerError", mock.Anything, mock.Anything).Return(expectedError)
+		response.On("InternalServerError", "can't list packs: %s", mock.Anything).Return(expectedError)
 		
 		err := api.ListPacks(ctx, request, response)
 		
@@ -410,7 +403,7 @@ func TestPacksAPI_GetPackByID(t *testing.T) {
 		
 		request.On("String", "id", mock.Anything).Return("nonexistent")
 		mockStore.On("GetPackByID", ctx, "nonexistent").Return(nil, store.ErrNotFound)
-		response.On("InternalServerError", mock.Anything, mock.Anything, mock.Anything).Return(store.ErrNotFound)
+		response.On("InternalServerError", "can't get pack by id - %s: %s", mock.Anything).Return(store.ErrNotFound)
 		
 		err := api.GetPackByID(ctx, request, response)
 		
@@ -465,7 +458,7 @@ func TestPacksAPI_GetPacksByVersionHash(t *testing.T) {
 		
 		request.On("String", "hash", mock.Anything).Return("nonexistent")
 		mockStore.On("GetPacksInvariantsByHash", ctx, "nonexistent").Return([]model.Pack{}, store.ErrNotFound)
-		response.On("InternalServerError", mock.Anything, mock.Anything, mock.Anything).Return(store.ErrNotFound)
+		response.On("InternalServerError", "can't get pack by hash - %s: %s", mock.Anything).Return(store.ErrNotFound)
 		
 		err := api.GetPacksByVersionHash(ctx, request, response)
 		
@@ -512,7 +505,7 @@ func TestPacksAPI_DeletePack(t *testing.T) {
 		expectedError := errors.New("database error")
 		request.On("String", "id", mock.Anything).Return("pack-1")
 		mockStore.On("DeletePack", ctx, "pack-1").Return(expectedError)
-		response.On("InternalServerError", mock.Anything, mock.Anything).Return(expectedError)
+		response.On("InternalServerError", "can't delete pack: %s", mock.Anything).Return(expectedError)
 		
 		err := api.DeletePack(ctx, request, response)
 		
@@ -553,7 +546,7 @@ func TestPacksAPI_ContextHandling(t *testing.T) {
 		// Mock the behavior for cancelled context
 		request.On("Body").Return(&model.CreatePacksRequest{Packs: []int64{250}})
 		mockStore.On("SavePacks", ctx, mock.AnythingOfType("[]model.Pack"), mock.AnythingOfType("string")).Return(context.Canceled)
-		response.On("InternalServerError", mock.Anything, mock.Anything).Return(context.Canceled)
+		response.On("InternalServerError", "can't create packs: %s", mock.Anything).Return(context.Canceled)
 		
 		err := api.CreatePacks(ctx, request, response)
 		

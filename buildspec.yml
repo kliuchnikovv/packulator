@@ -1,0 +1,51 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+      - REPOSITORY_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME
+      - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+      - IMAGE_TAG=${COMMIT_HASH:=latest}
+      - echo Build started on `date`
+      - echo Building the Docker image...
+  build:
+    commands:
+      - echo Build started on `date`
+      - echo Building the Docker image...
+      # Build the Docker image using production Dockerfile
+      - docker build -f Dockerfile.production -t $IMAGE_REPO_NAME:latest .
+      - docker tag $IMAGE_REPO_NAME:latest $REPOSITORY_URI:latest
+      - docker tag $IMAGE_REPO_NAME:latest $REPOSITORY_URI:$IMAGE_TAG
+  post_build:
+    commands:
+      - echo Build completed on `date`
+      - echo Pushing the Docker images...
+      - docker push $REPOSITORY_URI:latest
+      - docker push $REPOSITORY_URI:$IMAGE_TAG
+      # Create imagedefinitions.json file for ECS deployment
+      - echo '[{"name":"packulator-container","imageUri":"'$REPOSITORY_URI':'$IMAGE_TAG'"}]' > imagedefinitions.json
+      # Optional: Build and push frontend separately for S3 hosting
+      - |
+        if [ "$DEPLOY_FRONTEND_TO_S3" = "true" ]; then
+          echo "Building frontend for S3 deployment..."
+          cd frontend
+          npm ci
+          npm run build
+          echo "Uploading to S3..."
+          aws s3 sync build/ s3://$S3_FRONTEND_BUCKET --delete
+          aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_DISTRIBUTION_ID --paths "/*"
+          cd ..
+        fi
+
+artifacts:
+  files:
+    - imagedefinitions.json
+    - appspec.yml
+  name: PackulatorBuildArtifact
+
+cache:
+  paths:
+    - '/root/.npm/**/*'
+    - '/go/pkg/mod/**/*'
