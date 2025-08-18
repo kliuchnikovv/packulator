@@ -21,6 +21,7 @@ type Store interface {
 	GetPackByID(ctx context.Context, id string) (*model.Pack, error)
 	ListPacks(ctx context.Context) ([]model.Pack, error)
 	DeletePack(ctx context.Context, id string) error
+	HealthCheck(ctx context.Context) error
 }
 
 type store struct {
@@ -58,7 +59,7 @@ func (s *store) SavePacks(ctx context.Context, packs []model.Pack, versionHash s
 
 func (s *store) GetPackByID(ctx context.Context, id string) (*model.Pack, error) {
 	var pack model.Pack
-	err := s.db.WithContext(ctx).Preload("PackItems").First(&pack, id).Error
+	err := s.db.WithContext(ctx).Preload("PackItems").Where("id = ?", id).First(&pack).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, ErrNotFound
@@ -93,5 +94,13 @@ func (s *store) ListPacks(ctx context.Context) ([]model.Pack, error) {
 }
 
 func (s *store) DeletePack(ctx context.Context, id string) error {
-	return s.db.WithContext(ctx).Delete(&model.Pack{}, id).Error
+	return s.db.WithContext(ctx).Where("id = ?", id).Delete(&model.Pack{}).Error
+}
+
+func (s *store) HealthCheck(ctx context.Context) error {
+	sqlDB, err := s.db.DB()
+	if err != nil {
+		return err
+	}
+	return sqlDB.PingContext(ctx)
 }

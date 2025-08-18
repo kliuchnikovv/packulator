@@ -7,7 +7,7 @@ import (
 )
 
 type Pack struct {
-	ID          string         `json:"id" gorm:"primaryKey,autoIncrement"`
+	ID          string         `json:"id" gorm:"primaryKey"`
 	VersionHash string         `json:"version_hash" gorm:"index;not null"`
 	TotalAmount int64          `json:"total_amount" gorm:"not null"`
 	PackItems   []PackItem     `json:"pack_items" gorm:"foreignKey:PackID"`
@@ -17,7 +17,7 @@ type Pack struct {
 }
 
 type PackItem struct {
-	ID     string `json:"id" gorm:"primaryKey,autoIncrement"`
+	ID     string `json:"id" gorm:"primaryKey"`
 	PackID string `json:"pack_id" gorm:"not null;index"`
 	Size   int64  `json:"size" gorm:"not null"`
 }

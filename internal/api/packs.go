@@ -4,6 +4,8 @@ import (
 	"context"
 
 	"github.com/kliuchnikovv/engi"
+	"github.com/kliuchnikovv/engi/definition/middlewares/auth"
+	"github.com/kliuchnikovv/engi/definition/middlewares/cors"
 	"github.com/kliuchnikovv/engi/definition/parameter"
 	"github.com/kliuchnikovv/engi/definition/parameter/placing"
 	"github.com/kliuchnikovv/engi/definition/parameter/query"
@@ -27,13 +29,26 @@ func (c *PacksAPI) Prefix() string {
 	return "packs"
 }
 
+func (c *PacksAPI) Middlewares() []engi.Middleware {
+	return []engi.Middleware{
+		// w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000"),
+		// w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS"),
+		// w.Header().Set("Access-Control-Allow-Headers", "Content-Type"),
+
+		cors.AllowedOrigins("*"),
+		cors.AllowedHeaders("*"),
+		cors.AllowedMethods("*"),
+		auth.NoAuth(),
+	}
+}
+
 func (c *PacksAPI) Routers() engi.Routes {
 	return engi.Routes{
-		engi.PST(""): engi.Handle(
+		engi.PST("create"): engi.Handle(
 			c.CreatePacks,
 			parameter.Body(new(model.CreatePacksRequest)),
 		),
-		engi.GET(""): engi.Handle(c.ListPacks),
+		engi.GET("list"): engi.Handle(c.ListPacks),
 		engi.GET("id"): engi.Handle(
 			c.GetPackByID,
 			query.String("id", validate.NotEmpty),
@@ -42,7 +57,7 @@ func (c *PacksAPI) Routers() engi.Routes {
 			c.GetPacksByVersionHash,
 			query.String("hash", validate.NotEmpty),
 		),
-		engi.DEL(""): engi.Handle(
+		engi.DEL("delete"): engi.Handle(
 			c.DeletePack,
 			query.String("id", validate.NotEmpty),
 		),

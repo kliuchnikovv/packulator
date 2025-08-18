@@ -5,6 +5,8 @@ import (
 	"errors"
 
 	"github.com/kliuchnikovv/engi"
+	"github.com/kliuchnikovv/engi/definition/middlewares/auth"
+	"github.com/kliuchnikovv/engi/definition/middlewares/cors"
 	"github.com/kliuchnikovv/engi/definition/parameter/placing"
 	"github.com/kliuchnikovv/engi/definition/parameter/query"
 	"github.com/kliuchnikovv/engi/definition/validate"
@@ -26,6 +28,17 @@ func NewPackagingService(store store.Store) *PackagingService {
 
 func (c *PackagingService) Prefix() string {
 	return "packaging"
+}
+
+func (c *PackagingService) Middlewares() []engi.Middleware {
+	// Defines middlewares for all requests to this service.
+	// CORS, auth, etc...
+	return []engi.Middleware{
+		cors.AllowedOrigins("*"),
+		cors.AllowedHeaders("*"),
+		cors.AllowedMethods("*"),
+		auth.NoAuth(),
+	}
 }
 
 func (c *PackagingService) Routers() engi.Routes {

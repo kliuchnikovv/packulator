@@ -77,6 +77,21 @@ db-reset:
 	docker volume rm packulator_postgres_data || true
 	docker-compose up -d postgres
 
+# Kubernetes commands
+.PHONY: k8s-deploy k8s-delete k8s-status k8s-logs
+
+k8s-deploy:
+	kubectl apply -f k8s/
+
+k8s-delete:
+	kubectl delete -f k8s/
+
+k8s-status:
+	kubectl get all -n packulator
+
+k8s-logs:
+	kubectl logs -n packulator -l app=packulator --tail=50 -f
+
 # Help
 .PHONY: help
 
@@ -94,3 +109,7 @@ help:
 	@echo "  fmt          - Format code"
 	@echo "  vet          - Run go vet"
 	@echo "  lint         - Run linting tools"
+	@echo "  k8s-deploy   - Deploy to Kubernetes"
+	@echo "  k8s-delete   - Delete from Kubernetes"
+	@echo "  k8s-status   - Check Kubernetes status"
+	@echo "  k8s-logs     - View application logs"

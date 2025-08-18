@@ -66,6 +66,7 @@ func main() {
 	if err := engine.RegisterServices(
 		api.NewPacksAPI(store),
 		api.NewPackagingService(store),
+		api.NewHealthAPI(store),
 	); err != nil {
 		logger.Error("failed to register services", "error", err)
 		os.Exit(1)

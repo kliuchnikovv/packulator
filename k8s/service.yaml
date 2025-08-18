@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: packulator-service
+  namespace: packulator
+  labels:
+    app: packulator
+spec:
+  selector:
+    app: packulator
+  ports:
+  - port: 80
+    targetPort: 8080
+    protocol: TCP
+  type: ClusterIP
