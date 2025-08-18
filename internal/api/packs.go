@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"errors"
 
 	"github.com/kliuchnikovv/engi"
 	"github.com/kliuchnikovv/engi/definition/middlewares/auth"
@@ -90,11 +91,17 @@ func (c *PacksAPI) ListPacks(
 	_ engi.Request,
 	response engi.Response,
 ) error {
-	packs, err := c.packService.ListPacks(ctx)
+	latestConfig, err := c.packService.GetLatestPackConfig(ctx)
 	if err != nil {
-		return response.InternalServerError("can't list packs: %s", err)
+		if errors.Is(err, store.ErrNotFound) {
+			return response.OK(&model.PacksListResponse{
+				Packs:       []int64{},
+				VersionHash: "",
+			})
+		}
+		return response.InternalServerError("can't get latest pack config: %s", err)
 	}
-	return response.OK(packs)
+	return response.OK(latestConfig)
 }
 
 func (c *PacksAPI) GetPackByID(

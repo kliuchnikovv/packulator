@@ -50,6 +50,14 @@ func (m *MockStore) DeletePack(ctx context.Context, id string) error {
 	return args.Error(0)
 }
 
+func (m *MockStore) GetLatestPackConfig(ctx context.Context) (*model.Pack, error) {
+	args := m.Called(ctx)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.Pack), args.Error(1)
+}
+
 func (m *MockStore) HealthCheck(ctx context.Context) error {
 	args := m.Called(ctx)
 	return args.Error(0)

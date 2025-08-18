@@ -16,6 +16,7 @@ type PackService interface {
 	GetPacksByVersionHash(ctx context.Context, versionHash string) ([]model.Pack, error)
 	GetPackByID(ctx context.Context, id string) (*model.Pack, error)
 	ListPacks(ctx context.Context) ([]model.Pack, error)
+	GetLatestPackConfig(ctx context.Context) (*model.PacksListResponse, error)
 	DeletePack(ctx context.Context, id string) error
 }
 
@@ -70,6 +71,18 @@ func (s *packService) GetPackByID(ctx context.Context, id string) (*model.Pack, 
 
 func (s *packService) ListPacks(ctx context.Context) ([]model.Pack, error) {
 	return s.store.ListPacks(ctx)
+}
+
+func (s *packService) GetLatestPackConfig(ctx context.Context) (*model.PacksListResponse, error) {
+	pack, err := s.store.GetLatestPackConfig(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.PacksListResponse{
+		Packs:       pack.GetPacks(),
+		VersionHash: pack.VersionHash,
+	}, nil
 }
 
 func (s *packService) DeletePack(ctx context.Context, id string) error {
