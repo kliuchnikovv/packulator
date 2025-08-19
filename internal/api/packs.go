@@ -15,23 +15,27 @@ import (
 	"github.com/kliuchnikovv/packulator/internal/store"
 )
 
+// PacksAPI provides endpoints for managing pack configurations.
 type PacksAPI struct {
-	packService service.PackService
+	packService service.PackService // Service layer for pack operations
 }
 
+// NewPacksAPI creates a new packs API instance with the given store.
 func NewPacksAPI(store store.Store) *PacksAPI {
 	return &PacksAPI{
 		packService: service.NewPackService(store),
 	}
 }
 
+// Prefix returns the URL prefix for all pack management endpoints.
 func (c *PacksAPI) Prefix() string {
 	return "packs"
 }
 
+// Middlewares returns the middleware stack for pack management endpoints.
+// Allows all origins, headers, methods and requires no authentication.
 func (c *PacksAPI) Middlewares() []engi.Middleware {
 	return []engi.Middleware{
-
 		cors.AllowedOrigins("*"),
 		cors.AllowedHeaders("*"),
 		cors.AllowedMethods("*"),
@@ -39,6 +43,12 @@ func (c *PacksAPI) Middlewares() []engi.Middleware {
 	}
 }
 
+// Routers defines the available pack management routes:
+// POST /packs/create - Create new pack configuration
+// GET /packs/list - List all available packs  
+// GET /packs/id - Get specific pack by ID
+// GET /packs/hash - Get packs by version hash
+// DELETE /packs/delete - Delete pack configuration
 func (c *PacksAPI) Routers() engi.Routes {
 	return engi.Routes{
 		engi.PST("create"): engi.Handle(
@@ -61,6 +71,8 @@ func (c *PacksAPI) Routers() engi.Routes {
 	}
 }
 
+// CreatePacks handles POST /packs/create requests.
+// It creates a new pack configuration with the provided pack sizes.
 func (c *PacksAPI) CreatePacks(
 	ctx context.Context,
 	request engi.Request,
@@ -82,6 +94,8 @@ func (c *PacksAPI) CreatePacks(
 	})
 }
 
+// ListPacks handles GET /packs/list requests.
+// It returns a list of all available pack configurations.
 func (c *PacksAPI) ListPacks(
 	ctx context.Context,
 	_ engi.Request,
@@ -94,6 +108,8 @@ func (c *PacksAPI) ListPacks(
 	return response.OK(packs)
 }
 
+// GetPackByID handles GET /packs/id requests.
+// It retrieves a specific pack configuration by its unique ID.
 func (c *PacksAPI) GetPackByID(
 	ctx context.Context,
 	request engi.Request,
@@ -109,6 +125,8 @@ func (c *PacksAPI) GetPackByID(
 	return response.OK(pack)
 }
 
+// GetPackByHash handles GET /packs/hash requests.
+// It retrieves pack configurations by their version hash.
 func (c *PacksAPI) GetPackByHash(
 	ctx context.Context,
 	request engi.Request,
@@ -124,6 +142,8 @@ func (c *PacksAPI) GetPackByHash(
 	return response.OK(pack)
 }
 
+// DeletePack handles DELETE /packs/delete requests.
+// It removes a pack configuration by its unique ID.
 func (c *PacksAPI) DeletePack(
 	ctx context.Context,
 	request engi.Request,

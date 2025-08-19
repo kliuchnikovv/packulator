@@ -1,3 +1,5 @@
+// Package config provides configuration management for the Packulator application.
+// It loads configuration from environment variables with sensible defaults.
 package config
 
 import (
@@ -5,29 +7,36 @@ import (
 	"strconv"
 )
 
+// AppConfig holds the complete application configuration
 type AppConfig struct {
-	Server   ServerConfig
-	Database DatabaseConfig
-	App      ApplicationConfig
+	Server   ServerConfig      // HTTP server configuration
+	Database DatabaseConfig   // Database connection configuration
+	App      ApplicationConfig // Application-specific settings
 }
 
+// ServerConfig contains HTTP server settings
 type ServerConfig struct {
-	Host string
-	Port int
+	Host string // Server host address
+	Port int    // Server port number
 }
 
+// ApplicationConfig contains general application settings
 type ApplicationConfig struct {
-	Environment string
-	LogLevel    string
-	Debug       bool
+	Environment string // Application environment (development, production)
+	LogLevel    string // Logging level (debug, info, warn, error)
+	Debug       bool   // Debug mode flag
 }
 
+// NewAppConfig creates a new application configuration by loading values
+// from environment variables with fallback to default values.
 func NewAppConfig() (*AppConfig, error) {
+	// Parse server port from environment variable
 	port, err := strconv.Atoi(getEnv("PORT", "8080"))
 	if err != nil {
 		return nil, fmt.Errorf("invalid PORT value: %w", err)
 	}
 
+	// Parse debug flag from environment variable
 	debug, err := strconv.ParseBool(getEnv("DEBUG", "false"))
 	if err != nil {
 		return nil, fmt.Errorf("invalid DEBUG value: %w", err)
@@ -54,14 +63,17 @@ func NewAppConfig() (*AppConfig, error) {
 	}, nil
 }
 
+// ServerAddress returns the formatted server address as host:port
 func (c *AppConfig) ServerAddress() string {
 	return fmt.Sprintf("%s:%d", c.Server.Host, c.Server.Port)
 }
 
+// IsProduction returns true if the application is running in production environment
 func (c *AppConfig) IsProduction() bool {
 	return c.App.Environment == "production"
 }
 
+// IsDevelopment returns true if the application is running in development environment
 func (c *AppConfig) IsDevelopment() bool {
 	return c.App.Environment == "development"
 }

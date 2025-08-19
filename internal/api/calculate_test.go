@@ -20,7 +20,6 @@ func TestNewPackagingService(t *testing.T) {
 
 	assert.NotNil(t, api)
 	assert.Equal(t, mockStore, api.store)
-	assert.NotNil(t, api.packagingService)
 }
 
 func TestPackagingService_Prefix(t *testing.T) {

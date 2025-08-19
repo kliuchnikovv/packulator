@@ -13,20 +13,7 @@ type variant struct {
 	combination   map[int64]int64
 }
 
-//go:generate mockgen -source=pack.go -destination=mocks/pack.go -typed
-
-type PackagingService interface {
-	NumberOfPacks(ctx context.Context, amount int64, packs []int64) (map[int64]int64, error)
-}
-
-type service struct {
-}
-
-func NewPackagingService() PackagingService {
-	return &service{}
-}
-
-func (s *service) NumberOfPacks(
+func NumberOfPacks(
 	ctx context.Context,
 	amount int64,
 	packs []int64,
@@ -50,18 +37,21 @@ func (s *service) NumberOfPacks(
 		combination:   make(map[int64]int64),
 	}
 
+	// Dynamic programming: build all possible combinations
 	for sum := int64(0); sum <= max; sum++ {
 		if variants[sum] == nil {
 			continue
 		}
 
+		// Try adding each available pack size
 		for _, pack := range packs {
 			var newSum = sum + pack
 			if newSum > max {
-				break
+				break // Optimization: packs are sorted, so we can break early
 			}
 			current := variants[sum]
 
+			// Create new variant by adding current pack to existing combination
 			newVariant := &variant{
 				numberOfPacks: current.numberOfPacks + 1,
 				overshoot:     newSum - amount,
@@ -71,6 +61,7 @@ func (s *service) NumberOfPacks(
 			maps.Copy(newVariant.combination, current.combination)
 			newVariant.combination[pack]++
 
+			// Keep the better variant for this sum
 			if variants[newSum] == nil {
 				variants[newSum] = newVariant
 			} else if isBetter(newVariant, variants[newSum]) {
@@ -79,7 +70,7 @@ func (s *service) NumberOfPacks(
 		}
 	}
 
-	var result = s.getOptimalVariant(amount, max, variants)
+	var result = getOptimalVariant(amount, max, variants)
 	if result == nil {
 		return nil, errors.New("could not find a valid combination")
 	}
@@ -87,7 +78,7 @@ func (s *service) NumberOfPacks(
 	return result.combination, nil
 }
 
-func (s *service) getOptimalVariant(amount, max int64, variants []*variant) *variant {
+func getOptimalVariant(amount, max int64, variants []*variant) *variant {
 	var result *variant
 	for s := amount; s <= max; s++ {
 		if variants[s] == nil {
