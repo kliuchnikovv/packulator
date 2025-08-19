@@ -263,12 +263,12 @@ func TestPacksAPI_CreatePacks(t *testing.T) {
 		}
 
 		request.On("Body").Return(requestBody)
-		response.On("InternalServerError", "packs can't be empty", mock.Anything).Return(errors.New("packs can't be empty"))
+		response.On("BadRequest", "packs can't be empty", mock.Anything).Return(errors.New("packs can't be empty"))
 
 		err := api.CreatePacks(ctx, request, response)
 
 		assert.Error(t, err)
-		assert.Equal(t, 500, response.statusCode)
+		assert.Equal(t, 400, response.statusCode)
 
 		request.AssertExpectations(t)
 		response.AssertExpectations(t)
