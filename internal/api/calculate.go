@@ -62,7 +62,7 @@ func (c *PackagingService) NumberOfPackages(
 		versionHash = request.String("packs_hash", placing.InQuery)
 	)
 
-	invariants, err := c.store.GetPacksInvariantsByHash(ctx, versionHash)
+	pack, err := c.store.GetPackByHash(ctx, versionHash)
 	switch {
 	case err == nil:
 	case errors.Is(err, store.ErrNotFound):
@@ -71,7 +71,7 @@ func (c *PackagingService) NumberOfPackages(
 		return response.InternalServerError("failed to get packs: %s", err)
 	}
 
-	result, err := c.packagingService.NumberOfPacks(ctx, amount, invariants)
+	result, err := c.packagingService.NumberOfPacks(ctx, amount, pack.GetPacks())
 	if err != nil {
 		return response.InternalServerError("can't calculate number of packages: %s", err)
 	}

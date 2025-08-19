@@ -48,7 +48,7 @@ func TestCreatePacksRequest_JSONMarshaling(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			jsonData, err := json.Marshal(tt.request)
 			require.NoError(t, err)
-			
+
 			assert.JSONEq(t, tt.expected, string(jsonData))
 		})
 	}
@@ -102,7 +102,7 @@ func TestCreatePacksRequest_JSONUnmarshaling(t *testing.T) {
 			var request CreatePacksRequest
 			err := json.Unmarshal([]byte(tt.jsonData), &request)
 			require.NoError(t, err)
-			
+
 			assert.Equal(t, tt.expected, request)
 		})
 	}
@@ -135,7 +135,7 @@ func TestCreatePacksRequest_InvalidJSON(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			var request CreatePacksRequest
 			err := json.Unmarshal([]byte(tt.jsonData), &request)
-			
+
 			if tt.name == "missing packs field" {
 				// Missing field should not error, but result in nil slice
 				assert.NoError(t, err)
@@ -180,7 +180,7 @@ func TestCreatePacksResponse_JSONMarshaling(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			jsonData, err := json.Marshal(tt.response)
 			require.NoError(t, err)
-			
+
 			assert.JSONEq(t, tt.expected, string(jsonData))
 		})
 	}
@@ -227,7 +227,7 @@ func TestCreatePacksResponse_JSONUnmarshaling(t *testing.T) {
 			var response CreatePacksResponse
 			err := json.Unmarshal([]byte(tt.jsonData), &response)
 			require.NoError(t, err)
-			
+
 			assert.Equal(t, tt.expected, response)
 		})
 	}
@@ -259,13 +259,13 @@ func TestCreatePacksResponse_InvalidJSON(t *testing.T) {
 
 func TestCreatePacksRequest_ZeroValues(t *testing.T) {
 	var request CreatePacksRequest
-	
+
 	assert.Nil(t, request.Packs)
 }
 
 func TestCreatePacksResponse_ZeroValues(t *testing.T) {
 	var response CreatePacksResponse
-	
+
 	assert.Equal(t, "", response.VersionHash)
 }
 

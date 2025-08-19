@@ -7,6 +7,7 @@ require (
 	github.com/kliuchnikovv/engi v0.0.0-20250818162843-f1869cf425a7
 	github.com/stretchr/testify v1.9.0
 	go.opentelemetry.io/otel v1.30.0
+	go.uber.org/mock v0.6.0
 	gorm.io/driver/postgres v1.6.0
 	gorm.io/gorm v1.30.1
 )
@@ -30,7 +31,7 @@ require (
 	go.opentelemetry.io/otel/metric v1.30.0 // indirect
 	go.opentelemetry.io/otel/trace v1.30.0 // indirect
 	golang.org/x/crypto v0.31.0 // indirect
-	golang.org/x/sync v0.10.0 // indirect
+	golang.org/x/sync v0.16.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

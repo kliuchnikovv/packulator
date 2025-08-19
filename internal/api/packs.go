@@ -31,9 +31,6 @@ func (c *PacksAPI) Prefix() string {
 
 func (c *PacksAPI) Middlewares() []engi.Middleware {
 	return []engi.Middleware{
-		// w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000"),
-		// w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS"),
-		// w.Header().Set("Access-Control-Allow-Headers", "Content-Type"),
 
 		cors.AllowedOrigins("*"),
 		cors.AllowedHeaders("*"),
@@ -54,7 +51,7 @@ func (c *PacksAPI) Routers() engi.Routes {
 			query.String("id", validate.NotEmpty),
 		),
 		engi.GET("hash"): engi.Handle(
-			c.GetPacksByVersionHash,
+			c.GetPackByHash,
 			query.String("hash", validate.NotEmpty),
 		),
 		engi.DEL("delete"): engi.Handle(
@@ -112,19 +109,19 @@ func (c *PacksAPI) GetPackByID(
 	return response.OK(pack)
 }
 
-func (c *PacksAPI) GetPacksByVersionHash(
+func (c *PacksAPI) GetPackByHash(
 	ctx context.Context,
 	request engi.Request,
 	response engi.Response,
 ) error {
 	var hash = request.String("hash", placing.InQuery)
 
-	packs, err := c.packService.GetPacksByVersionHash(ctx, hash)
+	pack, err := c.packService.GetPackByHash(ctx, hash)
 	if err != nil {
 		return response.InternalServerError("can't get pack by hash - %s: %s", hash, err)
 	}
 
-	return response.OK(packs)
+	return response.OK(pack)
 }
 
 func (c *PacksAPI) DeletePack(

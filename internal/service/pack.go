@@ -11,10 +11,12 @@ import (
 	"github.com/kliuchnikovv/packulator/internal/store"
 )
 
+//go:generate mockgen -source=pack.go -destination=mocks/pack.go -typed
+
 type PackService interface {
 	CreatePacks(ctx context.Context, packs ...int64) (string, error)
-	GetPacksByVersionHash(ctx context.Context, versionHash string) ([]model.Pack, error)
 	GetPackByID(ctx context.Context, id string) (*model.Pack, error)
+	GetPackByHash(ctx context.Context, hash string) (*model.Pack, error)
 	ListPacks(ctx context.Context) ([]model.Pack, error)
 	DeletePack(ctx context.Context, id string) error
 }
@@ -30,42 +32,35 @@ func NewPackService(store store.Store) PackService {
 }
 
 func (s *packService) CreatePacks(ctx context.Context, packs ...int64) (string, error) {
-	versionHash := generateVersionHash(packs)
-
-	invariants := CreateInvariants(packs...)
-
-	modelPacks := make([]model.Pack, len(invariants))
-	for i, inv := range invariants {
-		modelPacks[i] = model.Pack{
-			ID:          uuid.NewString(),
-			VersionHash: versionHash,
-			TotalAmount: inv.TotalAmount,
-			PackItems:   make([]model.PackItem, len(inv.PackItems)),
+	var pack = model.Pack{
+		ID:          uuid.NewString(),
+		VersionHash: generateVersionHash(packs),
+		PackItems:   make([]model.PackItem, len(packs)),
+	}
+	for i, size := range packs {
+		pack.TotalAmount += size
+		pack.PackItems[i] = model.PackItem{
+			ID:     uuid.NewString(),
+			PackID: pack.ID,
+			Size:   size,
 		}
 
-		for j, pack := range inv.PackItems {
-			modelPacks[i].PackItems[j] = model.PackItem{
-				ID:     uuid.NewString(),
-				PackID: modelPacks[i].ID,
-				Size:   pack.Size,
-			}
-		}
 	}
 
-	err := s.store.SavePacks(ctx, modelPacks, versionHash)
+	err := s.store.SavePacks(ctx, pack)
 	if err != nil {
 		return "", err
 	}
 
-	return versionHash, nil
-}
-
-func (s *packService) GetPacksByVersionHash(ctx context.Context, versionHash string) ([]model.Pack, error) {
-	return s.store.GetPacksInvariantsByHash(ctx, versionHash)
+	return pack.VersionHash, nil
 }
 
 func (s *packService) GetPackByID(ctx context.Context, id string) (*model.Pack, error) {
 	return s.store.GetPackByID(ctx, id)
+}
+
+func (s *packService) GetPackByHash(ctx context.Context, hash string) (*model.Pack, error) {
+	return s.store.GetPackByHash(ctx, hash)
 }
 
 func (s *packService) ListPacks(ctx context.Context) ([]model.Pack, error) {

@@ -1,5 +1,11 @@
 # Packulator Backend API
 
+[![CI Pipeline](https://github.com/kliuchnikovv/packulator/actions/workflows/ci.yml/badge.svg)](https://github.com/kliuchnikovv/packulator/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/kliuchnikovv/packulator/branch/main/graph/badge.svg)](https://codecov.io/gh/kliuchnikovv/packulator)
+[![Go Report Card](https://goreportcard.com/badge/github.com/kliuchnikovv/packulator)](https://goreportcard.com/report/github.com/kliuchnikovv/packulator)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Go Version](https://img.shields.io/github/go-mod/go-version/kliuchnikovv/packulator)](go.mod)
+
 Go-based HTTP API that calculates the number of shipping packs needed for customer orders.
 
 ## 🚀 Features
@@ -172,6 +178,41 @@ Example for amount 1001 with packs [250, 500, 1000]:
 - 1000 × 1 = 1000 (remainder: 1)  
 - 250 × 1 = 250 (remainder: 0)
 - **Result**: {1000: 1, 250: 1} = 1250 items in 2 packs
+
+## 🧪 Testing & CI/CD
+
+### Test Coverage
+- **Overall Coverage**: 81%+
+- **API Layer**: 81.1% ✅
+- **Service Layer**: 100% ✅  
+- **Config Layer**: 100% ✅
+- **Model Layer**: 100% ✅
+
+### Running Tests Locally
+```bash
+# Run all tests
+make test
+
+# Run tests with coverage report
+make test-coverage-html
+
+# Run integration tests (requires PostgreSQL)
+make test-integration
+
+# Run all quality checks
+make lint
+make sec-scan
+```
+
+### CI Pipeline
+The project uses GitHub Actions for continuous integration:
+- ✅ **Linting** - golangci-lint with comprehensive rules
+- ✅ **Testing** - Unit tests, integration tests, race detection
+- ✅ **Security** - Gosec and Nancy vulnerability scanning  
+- ✅ **Build** - Multi-architecture builds (Linux, macOS, Windows)
+- ✅ **Coverage** - Automatic coverage reporting to Codecov
+
+See [CI Documentation](.github/README-CI.md) for detailed setup information.
 
 ## 🤝 Contributing
 

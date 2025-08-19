@@ -4,21 +4,21 @@ import (
 	"context"
 	"errors"
 
-	"github.com/kliuchnikovv/packulator/internal/config"
 	"github.com/kliuchnikovv/packulator/internal/model"
-	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
+
+//go:generate mockgen -source=pack.go -destination=mocks/pack.go -typed
 
 var (
 	ErrNotFound = errors.New("not found")
 )
 
 type Store interface {
-	GetPacksInvariantsByHash(ctx context.Context, versionHash string) ([]model.Pack, error)
 	SavePack(ctx context.Context, pack *model.Pack) error
-	SavePacks(ctx context.Context, packs []model.Pack, versionHash string) error
+	SavePacks(ctx context.Context, packs ...model.Pack) error
 	GetPackByID(ctx context.Context, id string) (*model.Pack, error)
+	GetPackByHash(ctx context.Context, hash string) (*model.Pack, error)
 	ListPacks(ctx context.Context) ([]model.Pack, error)
 	DeletePack(ctx context.Context, id string) error
 	HealthCheck(ctx context.Context) error
@@ -28,8 +28,8 @@ type store struct {
 	db *gorm.DB
 }
 
-func NewStore(dbConfig *config.DatabaseConfig) (Store, error) {
-	db, err := gorm.Open(postgres.Open(dbConfig.DSN()), &gorm.Config{})
+func NewStore(dialector gorm.Dialector) (Store, error) {
+	db, err := gorm.Open(dialector, &gorm.Config{})
 	if err != nil {
 		return nil, err
 	}
@@ -45,10 +45,9 @@ func (s *store) SavePack(ctx context.Context, pack *model.Pack) error {
 	return s.db.WithContext(ctx).Create(pack).Error
 }
 
-func (s *store) SavePacks(ctx context.Context, packs []model.Pack, versionHash string) error {
+func (s *store) SavePacks(ctx context.Context, packs ...model.Pack) error {
 	return s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		for i := range packs {
-			packs[i].VersionHash = versionHash
 			if err := tx.Create(&packs[i]).Error; err != nil {
 				return err
 			}
@@ -69,22 +68,16 @@ func (s *store) GetPackByID(ctx context.Context, id string) (*model.Pack, error)
 	return &pack, nil
 }
 
-func (s *store) GetPacksInvariantsByHash(ctx context.Context, versionHash string) ([]model.Pack, error) {
-	var packs []model.Pack
-	err := s.db.WithContext(ctx).
-		Preload("PackItems").
-		Where("version_hash = ?", versionHash).
-		Find(&packs).Error
-
+func (s *store) GetPackByHash(ctx context.Context, hash string) (*model.Pack, error) {
+	var pack model.Pack
+	err := s.db.WithContext(ctx).Preload("PackItems").Where("version_hash = ?", hash).First(&pack).Error
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrNotFound
+		}
 		return nil, err
 	}
-
-	if len(packs) == 0 {
-		return nil, ErrNotFound
-	}
-
-	return packs, nil
+	return &pack, nil
 }
 
 func (s *store) ListPacks(ctx context.Context) ([]model.Pack, error) {

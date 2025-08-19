@@ -13,6 +13,7 @@ import (
 	"github.com/kliuchnikovv/packulator/internal/config"
 	"github.com/kliuchnikovv/packulator/internal/store"
 	"go.opentelemetry.io/otel"
+	"gorm.io/driver/postgres"
 )
 
 func main() {
@@ -47,7 +48,7 @@ func main() {
 		"debug", cfg.App.Debug,
 	)
 
-	store, err := store.NewStore(&cfg.Database)
+	store, err := store.NewStore(postgres.Open(cfg.Database.DSN()))
 	if err != nil {
 		logger.Error("failed to create store", "error", err)
 		os.Exit(1)

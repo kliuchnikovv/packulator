@@ -33,7 +33,7 @@ func TestNewDatabaseConfig(t *testing.T) {
 		os.Setenv("DB_PASSWORD", "testpass")
 		os.Setenv("DB_NAME", "testdb")
 		os.Setenv("DB_SSL_MODE", "require")
-		
+
 		defer func() {
 			envVars := []string{"DB_HOST", "DB_PORT", "DB_USER", "DB_PASSWORD", "DB_NAME", "DB_SSL_MODE"}
 			for _, env := range envVars {
@@ -55,7 +55,7 @@ func TestNewDatabaseConfig(t *testing.T) {
 		// Set only some environment variables
 		os.Setenv("DB_HOST", "custom.host.com")
 		os.Setenv("DB_PASSWORD", "secretpass")
-		
+
 		defer func() {
 			os.Unsetenv("DB_HOST")
 			os.Unsetenv("DB_PASSWORD")
@@ -66,7 +66,7 @@ func TestNewDatabaseConfig(t *testing.T) {
 		// Custom values
 		assert.Equal(t, "custom.host.com", cfg.Host)
 		assert.Equal(t, "secretpass", cfg.Password)
-		
+
 		// Default values for unset variables
 		assert.Equal(t, "5432", cfg.Port)
 		assert.Equal(t, "postgres", cfg.User)

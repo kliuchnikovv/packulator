@@ -1,0 +1,158 @@
+run:
+  timeout: 5m
+  issues-exit-code: 1
+  tests: true
+
+linters-settings:
+  cyclop:
+    max-complexity: 15
+  dupl:
+    threshold: 100
+  errcheck:
+    check-type-assertions: true
+    check-blank: true
+  gocognit:
+    min-complexity: 20
+  goconst:
+    min-len: 2
+    min-occurrences: 3
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - experimental
+      - opinionated
+      - performance
+      - style
+  gofumpt:
+    extra-rules: true
+  gomnd:
+    checks:
+      - argument
+      - case
+      - condition
+      - operation
+      - return
+  gosec:
+    excludes:
+      - G404 # Use of weak random number generator - acceptable for non-crypto use
+  gosimple:
+    checks: ["all"]
+  govet:
+    check-shadowing: true
+    enable-all: true
+  lll:
+    line-length: 120
+  maligned:
+    suggest-new: true
+  misspell:
+    locale: US
+  nolintlint:
+    allow-leading-space: true
+    allow-unused: false
+    require-explanation: false
+    require-specific: false
+  revive:
+    rules:
+      - name: exported
+        arguments:
+          - "checkPrivateReceivers"
+          - "sayRepetitiveInsteadOfStutters"
+  staticcheck:
+    checks: ["all"]
+  unparam:
+    check-exported: false
+
+linters:
+  enable:
+    # Default linters
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - typecheck
+    - unused
+    
+    # Additional useful linters
+    - asciicheck
+    - bodyclose
+    - cyclop
+    - dupl
+    - durationcheck
+    - errorlint
+    - exhaustive
+    - exportloopref
+    - forbidigo
+    - gocognit
+    - goconst
+    - gocritic
+    - gofumpt
+    - gomnd
+    - gosec
+    - misspell
+    - nakedret
+    - nilerr
+    - nolintlint
+    - prealloc
+    - revive
+    - rowserrcheck
+    - sqlclosecheck
+    - unconvert
+    - unparam
+    - wastedassign
+    - whitespace
+
+  disable:
+    # Disabled linters that might be too strict
+    - funlen
+    - gochecknoglobals
+    - gochecknoinits
+    - godot
+    - godox
+    - goerr113
+    - gofmt # Using gofumpt instead
+    - golint # Deprecated
+    - goprintffuncname
+    - interfacer # Deprecated
+    - lll # Line length can be flexible
+    - maligned # Deprecated
+    - nestif
+    - nlreturn
+    - paralleltest
+    - testpackage
+    - wsl
+
+issues:
+  exclude-rules:
+    # Exclude some linters from running on tests files
+    - path: _test\.go
+      linters:
+        - gomnd
+        - gocritic
+        - gosec
+        - dupl
+    
+    # Exclude some staticcheck messages
+    - linters:
+        - staticcheck
+      text: "SA9003:"
+    
+    # Exclude lll issues for long lines in strings and comments
+    - linters:
+        - lll
+      source: "^//.*$"
+    
+    # Exclude unparam for main functions
+    - path: cmd/
+      linters:
+        - unparam
+
+  max-issues-per-linter: 50
+  max-same-issues: 3
+  new: false
+
+output:
+  format: colored-line-number
+  print-issued-lines: true
+  print-linter-name: true
+  uniq-by-line: true

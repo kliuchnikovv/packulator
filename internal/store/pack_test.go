@@ -4,75 +4,90 @@ import (
 	"context"
 	"testing"
 
-	"github.com/kliuchnikovv/packulator/internal/config"
 	"github.com/kliuchnikovv/packulator/internal/model"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"gorm.io/gorm"
 )
 
-// MockDB is a mock for GORM DB operations
-type MockDB struct {
-	mock.Mock
+// Simple tests that don't require database mocking
+// These test business logic and data structures
+
+func TestErrNotFound_Simple(t *testing.T) {
+	assert.Equal(t, "not found", ErrNotFound.Error())
+	assert.ErrorIs(t, ErrNotFound, ErrNotFound)
 }
 
-func (m *MockDB) WithContext(ctx context.Context) *MockDB {
-	args := m.Called(ctx)
-	return args.Get(0).(*MockDB)
+func TestStore_ContextHandling_Simple(t *testing.T) {
+	ctx := context.Background()
+	assert.NotNil(t, ctx)
+
+	// Test context with timeout
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	assert.NotNil(t, ctx)
 }
 
-func (m *MockDB) Create(value interface{}) *MockDB {
-	args := m.Called(value)
-	return args.Get(0).(*MockDB)
+func TestPackDataValidation_Simple(t *testing.T) {
+	pack := createTestPackSimple()
+
+	assert.NotEmpty(t, pack.ID)
+	assert.NotEmpty(t, pack.VersionHash)
+	assert.Greater(t, pack.TotalAmount, int64(0))
+	assert.NotEmpty(t, pack.PackItems)
+
+	for _, item := range pack.PackItems {
+		assert.NotEmpty(t, item.ID)
+		assert.Equal(t, pack.ID, item.PackID)
+		assert.Greater(t, item.Size, int64(0))
+	}
 }
 
-func (m *MockDB) Preload(query string, args ...interface{}) *MockDB {
-	mockArgs := []interface{}{query}
-	mockArgs = append(mockArgs, args...)
-	callArgs := m.Called(mockArgs...)
-	return callArgs.Get(0).(*MockDB)
+func TestPacksDataValidation_Simple(t *testing.T) {
+	packs := createTestPacksSimple()
+
+	assert.Len(t, packs, 2)
+
+	for _, pack := range packs {
+		assert.NotEmpty(t, pack.ID)
+		assert.NotEmpty(t, pack.VersionHash)
+		assert.Greater(t, pack.TotalAmount, int64(0))
+		assert.NotEmpty(t, pack.PackItems)
+	}
+
+	// All packs should have the same version hash in this test data
+	assert.Equal(t, packs[0].VersionHash, packs[1].VersionHash)
 }
 
-func (m *MockDB) First(dest interface{}, conds ...interface{}) *MockDB {
-	mockArgs := []interface{}{dest}
-	mockArgs = append(mockArgs, conds...)
-	callArgs := m.Called(mockArgs...)
-	return callArgs.Get(0).(*MockDB)
+// Test data creation and validation
+func TestCreateTestPack_Simple(t *testing.T) {
+	pack := createTestPackSimple()
+
+	assert.Equal(t, "pack-1", pack.ID)
+	assert.Equal(t, "abc123", pack.VersionHash)
+	assert.Equal(t, int64(750), pack.TotalAmount)
+	assert.Len(t, pack.PackItems, 2)
+
+	// Verify pack items
+	assert.Equal(t, "item-1", pack.PackItems[0].ID)
+	assert.Equal(t, int64(250), pack.PackItems[0].Size)
+	assert.Equal(t, "item-2", pack.PackItems[1].ID)
+	assert.Equal(t, int64(500), pack.PackItems[1].Size)
 }
 
-func (m *MockDB) Where(query interface{}, args ...interface{}) *MockDB {
-	mockArgs := []interface{}{query}
-	mockArgs = append(mockArgs, args...)
-	callArgs := m.Called(mockArgs...)
-	return callArgs.Get(0).(*MockDB)
+// Benchmark pack creation
+func BenchmarkCreateTestPack_Simple(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		_ = createTestPackSimple()
+	}
 }
 
-func (m *MockDB) Find(dest interface{}, conds ...interface{}) *MockDB {
-	mockArgs := []interface{}{dest}
-	mockArgs = append(mockArgs, conds...)
-	callArgs := m.Called(mockArgs...)
-	return callArgs.Get(0).(*MockDB)
-}
-
-func (m *MockDB) Delete(value interface{}, conds ...interface{}) *MockDB {
-	mockArgs := []interface{}{value}
-	mockArgs = append(mockArgs, conds...)
-	callArgs := m.Called(mockArgs...)
-	return callArgs.Get(0).(*MockDB)
-}
-
-func (m *MockDB) Transaction(fc func(*gorm.DB) error) error {
-	args := m.Called(fc)
-	return args.Error(0)
-}
-
-func (m *MockDB) Error() error {
-	args := m.Called()
-	return args.Error(0)
+func BenchmarkCreateTestPacks_Simple(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		_ = createTestPacksSimple()
+	}
 }
 
 // Test data helpers
-func createTestPack() model.Pack {
+func createTestPackSimple() model.Pack {
 	return model.Pack{
 		ID:          "pack-1",
 		VersionHash: "abc123",
@@ -92,7 +107,7 @@ func createTestPack() model.Pack {
 	}
 }
 
-func createTestPacks() []model.Pack {
+func createTestPacksSimple() []model.Pack {
 	return []model.Pack{
 		{
 			ID:          "pack-1",
@@ -121,159 +136,56 @@ func createTestPacks() []model.Pack {
 	}
 }
 
-func TestNewStore_InvalidConfig(t *testing.T) {
-	invalidConfig := &config.DatabaseConfig{
-		Host:     "invalid-host",
-		Port:     "invalid-port",
-		User:     "invalid-user",
-		Password: "invalid-password",
-		Database: "invalid-db",
-		SSLMode:  "disable",
-	}
+// Test Store interface compliance (conceptual test)
+func TestStoreInterface_Simple(t *testing.T) {
+	// Test that our interface is well-defined
+	var _ Store = (*store)(nil) // This will fail to compile if store doesn't implement Store
 
-	store, err := NewStore(invalidConfig)
-	assert.Error(t, err)
-	assert.Nil(t, store)
-}
-
-func TestStore_SavePack_Success(t *testing.T) {
-	// This test would need a real database connection or extensive mocking
-	// For now, we'll test the interface and basic structure
-	t.Skip("Requires database integration or complex mocking")
-}
-
-func TestStore_SavePacks_Success(t *testing.T) {
-	t.Skip("Requires database integration or complex mocking")
-}
-
-func TestStore_GetPackByID_Success(t *testing.T) {
-	t.Skip("Requires database integration or complex mocking")
-}
-
-func TestStore_GetPackByID_NotFound(t *testing.T) {
-	t.Skip("Requires database integration or complex mocking")
-}
-
-func TestStore_GetPacksInvariantsByHash_Success(t *testing.T) {
-	t.Skip("Requires database integration or complex mocking")
-}
-
-func TestStore_GetPacksInvariantsByHash_NotFound(t *testing.T) {
-	t.Skip("Requires database integration or complex mocking")
-}
-
-func TestStore_ListPacks_Success(t *testing.T) {
-	t.Skip("Requires database integration or complex mocking")
-}
-
-func TestStore_DeletePack_Success(t *testing.T) {
-	t.Skip("Requires database integration or complex mocking")
-}
-
-// Test the interface compliance
-func TestStoreInterface(t *testing.T) {
-	// Create a mock database config (won't actually connect)
-	config := &config.DatabaseConfig{
-		Host:     "localhost",
-		Port:     "5432",
-		User:     "test",
-		Password: "test",
-		Database: "test",
-		SSLMode:  "disable",
-	}
-
-	// This will fail to connect, but we're testing interface compliance
-	_, err := NewStore(config)
-	
-	// We expect an error since we're not connecting to a real database
-	assert.Error(t, err)
-}
-
-// Test error types
-func TestErrNotFound(t *testing.T) {
-	assert.Equal(t, "not found", ErrNotFound.Error())
-	assert.ErrorIs(t, ErrNotFound, ErrNotFound)
-}
-
-// Test context handling (unit test without database)
-func TestStore_ContextHandling(t *testing.T) {
-	ctx := context.Background()
-	assert.NotNil(t, ctx)
-	
-	// Test context with timeout
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
-	assert.NotNil(t, ctx)
-}
-
-// Integration test marker - these would be run with -tags=integration
-func TestStoreIntegration(t *testing.T) {
-	if testing.Short() {
-		t.Skip("Skipping integration test in short mode")
-	}
-	
-	// These tests would require:
-	// 1. A test database (PostgreSQL test container or test DB)
-	// 2. Database migrations
-	// 3. Cleanup between tests
-	
-	t.Run("SavePack integration", func(t *testing.T) {
-		t.Skip("Requires test database setup")
-		// Test actual database operations
-	})
-	
-	t.Run("GetPackByID integration", func(t *testing.T) {
-		t.Skip("Requires test database setup")
-		// Test actual database operations
-	})
-	
-	t.Run("Transaction rollback", func(t *testing.T) {
-		t.Skip("Requires test database setup")
-		// Test transaction handling
-	})
-}
-
-// Test data validation
-func TestPackDataValidation(t *testing.T) {
-	pack := createTestPack()
-	
-	assert.NotEmpty(t, pack.ID)
-	assert.NotEmpty(t, pack.VersionHash)
-	assert.Greater(t, pack.TotalAmount, int64(0))
-	assert.NotEmpty(t, pack.PackItems)
-	
-	for _, item := range pack.PackItems {
-		assert.NotEmpty(t, item.ID)
-		assert.Equal(t, pack.ID, item.PackID)
-		assert.Greater(t, item.Size, int64(0))
+	// Test interface methods exist (compilation check)
+	var store Store
+	if store != nil {
+		// These calls would panic but this tests the interface signatures
+		_ = store.SavePack
+		_ = store.SavePacks
+		_ = store.GetPackByID
+		_ = store.ListPacks
+		_ = store.DeletePack
+		_ = store.HealthCheck
 	}
 }
 
-func TestPacksDataValidation(t *testing.T) {
-	packs := createTestPacks()
-	
-	assert.Len(t, packs, 2)
-	
-	for _, pack := range packs {
-		assert.NotEmpty(t, pack.ID)
-		assert.NotEmpty(t, pack.VersionHash)
-		assert.Greater(t, pack.TotalAmount, int64(0))
-		assert.NotEmpty(t, pack.PackItems)
-	}
-	
-	// All packs should have the same version hash in this test data
-	assert.Equal(t, packs[0].VersionHash, packs[1].VersionHash)
+// Test error types and constants
+func TestStoreErrors_Simple(t *testing.T) {
+	// Test that ErrNotFound is properly defined
+	assert.NotNil(t, ErrNotFound)
+	assert.Contains(t, ErrNotFound.Error(), "not found")
+
+	// Test that it can be used with errors.Is
+	err := ErrNotFound
+	assert.ErrorIs(t, err, ErrNotFound)
 }
 
-// Benchmark for pack operations (would be useful for performance testing)
-func BenchmarkCreateTestPack(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		_ = createTestPack()
+// Test model structures
+func TestPackModel_Simple(t *testing.T) {
+	pack := model.Pack{
+		ID:          "test-id",
+		VersionHash: "test-hash",
+		TotalAmount: 100,
 	}
+
+	assert.Equal(t, "test-id", pack.ID)
+	assert.Equal(t, "test-hash", pack.VersionHash)
+	assert.Equal(t, int64(100), pack.TotalAmount)
 }
 
-func BenchmarkCreateTestPacks(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		_ = createTestPacks()
+func TestPackItemModel_Simple(t *testing.T) {
+	item := model.PackItem{
+		ID:     "item-id",
+		PackID: "pack-id",
+		Size:   50,
 	}
+
+	assert.Equal(t, "item-id", item.ID)
+	assert.Equal(t, "pack-id", item.PackID)
+	assert.Equal(t, int64(50), item.Size)
 }

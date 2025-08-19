@@ -8,9 +8,9 @@ import (
 
 func TestPack_GetPacks(t *testing.T) {
 	tests := []struct {
-		name      string
-		pack      Pack
-		expected  []int64
+		name     string
+		pack     Pack
+		expected []int64
 	}{
 		{
 			name: "empty pack items",
@@ -166,7 +166,7 @@ func TestPack_GetPacks_EmptySliceNotNil(t *testing.T) {
 	}
 
 	result := pack.GetPacks()
-	
+
 	assert.NotNil(t, result, "GetPacks should return an empty slice, not nil")
 	assert.Len(t, result, 0, "GetPacks should return an empty slice")
 	assert.IsType(t, []int64{}, result, "GetPacks should return []int64 type")
@@ -180,7 +180,7 @@ func TestPack_GetPacks_WithNilPackItems(t *testing.T) {
 	}
 
 	result := pack.GetPacks()
-	
+
 	assert.NotNil(t, result, "GetPacks should return an empty slice, not nil")
 	assert.Len(t, result, 0, "GetPacks should return an empty slice")
 }
@@ -216,7 +216,7 @@ func TestPack_Fields(t *testing.T) {
 
 func TestPackItem_ZeroValues(t *testing.T) {
 	var item PackItem
-	
+
 	assert.Equal(t, "", item.ID)
 	assert.Equal(t, "", item.PackID)
 	assert.Equal(t, int64(0), item.Size)
@@ -224,7 +224,7 @@ func TestPackItem_ZeroValues(t *testing.T) {
 
 func TestPack_ZeroValues(t *testing.T) {
 	var pack Pack
-	
+
 	assert.Equal(t, "", pack.ID)
 	assert.Equal(t, "", pack.VersionHash)
 	assert.Equal(t, int64(0), pack.TotalAmount)

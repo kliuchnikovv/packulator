@@ -12,8 +12,8 @@ func TestNewAppConfig(t *testing.T) {
 	t.Run("default values", func(t *testing.T) {
 		// Clear environment variables
 		envVars := []string{
-			"HOST", "PORT", "DB_HOST", "DB_PORT", "DB_USER", 
-			"DB_PASSWORD", "DB_NAME", "DB_SSL_MODE", "ENVIRONMENT", 
+			"HOST", "PORT", "DB_HOST", "DB_PORT", "DB_USER",
+			"DB_PASSWORD", "DB_NAME", "DB_SSL_MODE", "ENVIRONMENT",
 			"LOG_LEVEL", "DEBUG",
 		}
 		for _, env := range envVars {
@@ -54,11 +54,11 @@ func TestNewAppConfig(t *testing.T) {
 		os.Setenv("ENVIRONMENT", "production")
 		os.Setenv("LOG_LEVEL", "debug")
 		os.Setenv("DEBUG", "true")
-		
+
 		defer func() {
 			envVars := []string{
-				"HOST", "PORT", "DB_HOST", "DB_PORT", "DB_USER", 
-				"DB_PASSWORD", "DB_NAME", "DB_SSL_MODE", "ENVIRONMENT", 
+				"HOST", "PORT", "DB_HOST", "DB_PORT", "DB_USER",
+				"DB_PASSWORD", "DB_NAME", "DB_SSL_MODE", "ENVIRONMENT",
 				"LOG_LEVEL", "DEBUG",
 			}
 			for _, env := range envVars {

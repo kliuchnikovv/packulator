@@ -17,6 +17,18 @@ test:
 test-coverage:
 	go test -cover ./...
 
+test-coverage-html:
+	go test -coverprofile=coverage.out ./...
+	go tool cover -html=coverage.out -o coverage.html
+
+test-integration:
+	go test -tags=integration ./...
+
+test-race:
+	go test -race ./...
+
+test-all: test test-race test-integration test-coverage
+
 clean:
 	rm -f $(APP_NAME)
 
@@ -53,7 +65,7 @@ dev-down:
 	docker-compose down
 
 # Linting and formatting
-.PHONY: fmt vet lint
+.PHONY: fmt vet lint golangci-lint
 
 fmt:
 	go fmt ./...
@@ -61,7 +73,17 @@ fmt:
 vet:
 	go vet ./...
 
-lint: fmt vet
+golangci-lint:
+	golangci-lint run
+
+lint: fmt vet golangci-lint
+
+# Security scanning
+.PHONY: sec-scan
+
+sec-scan:
+	gosec ./...
+	go list -json -deps ./... | nancy sleuth
 
 # Database commands
 .PHONY: db-up db-down db-reset
@@ -107,8 +129,12 @@ help:
 	@echo "  dev-setup    - Setup development environment"
 	@echo "  dev-up       - Start development mode"
 	@echo "  fmt          - Format code"
-	@echo "  vet          - Run go vet"
+	@echo "  vet          - Run go vet"  
 	@echo "  lint         - Run linting tools"
+	@echo "  golangci-lint - Run golangci-lint"
+	@echo "  sec-scan     - Run security scanning"
+	@echo "  test-all     - Run all tests (unit, race, integration, coverage)"
+	@echo "  test-coverage-html - Generate HTML coverage report"
 	@echo "  k8s-deploy   - Deploy to Kubernetes"
 	@echo "  k8s-delete   - Delete from Kubernetes"
 	@echo "  k8s-status   - Check Kubernetes status"

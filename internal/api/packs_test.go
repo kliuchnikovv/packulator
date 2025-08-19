@@ -10,9 +10,11 @@ import (
 	"github.com/kliuchnikovv/engi/definition/parameter/placing"
 	"github.com/kliuchnikovv/packulator/internal/model"
 	"github.com/kliuchnikovv/packulator/internal/store"
+	mock_store "github.com/kliuchnikovv/packulator/internal/store/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 )
 
 // MockStore implements store.Store interface for testing
@@ -20,17 +22,12 @@ type MockStore struct {
 	mock.Mock
 }
 
-func (m *MockStore) GetPacksInvariantsByHash(ctx context.Context, versionHash string) ([]model.Pack, error) {
-	args := m.Called(ctx, versionHash)
-	return args.Get(0).([]model.Pack), args.Error(1)
-}
-
-func (m *MockStore) SavePack(ctx context.Context, pack *model.Pack) error {
+func (m *MockStore) SavePacks(ctx context.Context, pack *model.Pack) error {
 	args := m.Called(ctx, pack)
 	return args.Error(0)
 }
 
-func (m *MockStore) SavePacks(ctx context.Context, packs []model.Pack, versionHash string) error {
+func (m *MockStore) SavePackss(ctx context.Context, packs []model.Pack, versionHash string) error {
 	args := m.Called(ctx, packs, versionHash)
 	return args.Error(0)
 }
@@ -204,117 +201,117 @@ func (m *MockRequest) Time(key string, layout string, paramPlacing placing.Placi
 }
 
 func TestNewPacksAPI(t *testing.T) {
-	mockStore := &MockStore{}
+	mockStore := mock_store.NewMockStore(gomock.NewController(t))
 	api := NewPacksAPI(mockStore)
-	
+
 	assert.NotNil(t, api)
 	assert.NotNil(t, api.packService)
 }
 
 func TestPacksAPI_Prefix(t *testing.T) {
-	mockStore := &MockStore{}
+	mockStore := mock_store.NewMockStore(gomock.NewController(t))
 	api := NewPacksAPI(mockStore)
-	
+
 	assert.Equal(t, "packs", api.Prefix())
 }
 
 func TestPacksAPI_CreatePacks(t *testing.T) {
 	t.Run("successful creation", func(t *testing.T) {
-		mockStore := &MockStore{}
+		mockStore := mock_store.NewMockStore(gomock.NewController(t))
 		api := NewPacksAPI(mockStore)
 		ctx := context.Background()
-		
+
 		request := &MockRequest{}
 		response := &MockResponse{}
-		
+
 		requestBody := &model.CreatePacksRequest{
 			Packs: []int64{250, 500, 1000},
 		}
-		
+
 		// Mock request body
 		request.On("Body").Return(requestBody)
-		
-		// Mock store SavePacks
-		mockStore.On("SavePacks", ctx, mock.AnythingOfType("[]model.Pack"), mock.AnythingOfType("string")).Return(nil)
-		
+
+		// Mock store SavePackss
+		mockStore.EXPECT().SavePacks(gomock.Any(), gomock.Any()).
+			Return(nil)
 		// Mock response
 		response.On("OK", mock.AnythingOfType("model.CreatePacksResponse")).Return(nil)
-		
+
 		err := api.CreatePacks(ctx, request, response)
-		
+
 		require.NoError(t, err)
 		assert.Equal(t, 200, response.statusCode)
-		
+
 		// Verify response data
 		responseData, ok := response.data.(model.CreatePacksResponse)
 		require.True(t, ok)
 		assert.NotEmpty(t, responseData.VersionHash)
-		
+
 		request.AssertExpectations(t)
 		response.AssertExpectations(t)
-		mockStore.AssertExpectations(t)
 	})
-	
+
 	t.Run("empty packs", func(t *testing.T) {
-		mockStore := &MockStore{}
+		mockStore := mock_store.NewMockStore(gomock.NewController(t))
 		api := NewPacksAPI(mockStore)
 		ctx := context.Background()
-		
+
 		request := &MockRequest{}
 		response := &MockResponse{}
-		
+
 		requestBody := &model.CreatePacksRequest{
 			Packs: []int64{},
 		}
-		
+
 		request.On("Body").Return(requestBody)
 		response.On("InternalServerError", "packs can't be empty", mock.Anything).Return(errors.New("packs can't be empty"))
-		
+
 		err := api.CreatePacks(ctx, request, response)
-		
+
 		assert.Error(t, err)
 		assert.Equal(t, 500, response.statusCode)
-		
+
 		request.AssertExpectations(t)
 		response.AssertExpectations(t)
 	})
-	
+
 	t.Run("service error", func(t *testing.T) {
-		mockStore := &MockStore{}
+		mockStore := mock_store.NewMockStore(gomock.NewController(t))
 		api := NewPacksAPI(mockStore)
 		ctx := context.Background()
-		
+
 		request := &MockRequest{}
 		response := &MockResponse{}
-		
+
 		requestBody := &model.CreatePacksRequest{
 			Packs: []int64{250, 500},
 		}
-		
+
 		request.On("Body").Return(requestBody)
-		mockStore.On("SavePacks", ctx, mock.AnythingOfType("[]model.Pack"), mock.AnythingOfType("string")).Return(errors.New("database error"))
+		mockStore.EXPECT().SavePacks(gomock.Any(), gomock.Any()).
+			Return(errors.New("database error"))
 		response.On("InternalServerError", "can't create packs: %s", mock.Anything).Return(errors.New("can't create packs"))
-		
+
 		err := api.CreatePacks(ctx, request, response)
-		
+
 		assert.Error(t, err)
 		assert.Equal(t, 500, response.statusCode)
-		
+
 		request.AssertExpectations(t)
 		response.AssertExpectations(t)
-		mockStore.AssertExpectations(t)
+
 	})
 }
 
 func TestPacksAPI_ListPacks(t *testing.T) {
 	t.Run("successful listing", func(t *testing.T) {
-		mockStore := &MockStore{}
+		mockStore := mock_store.NewMockStore(gomock.NewController(t))
 		api := NewPacksAPI(mockStore)
 		ctx := context.Background()
-		
+
 		request := &MockRequest{}
 		response := &MockResponse{}
-		
+
 		expectedPacks := []model.Pack{
 			{
 				ID:          "pack-1",
@@ -327,206 +324,207 @@ func TestPacksAPI_ListPacks(t *testing.T) {
 				TotalAmount: 500,
 			},
 		}
-		
-		mockStore.On("ListPacks", ctx).Return(expectedPacks, nil)
+
+		mockStore.EXPECT().ListPacks(gomock.Any()).Return(expectedPacks, nil)
 		response.On("OK", expectedPacks).Return(nil)
-		
+
 		err := api.ListPacks(ctx, request, response)
-		
+
 		require.NoError(t, err)
 		assert.Equal(t, 200, response.statusCode)
 		assert.Equal(t, expectedPacks, response.data)
-		
+
 		response.AssertExpectations(t)
-		mockStore.AssertExpectations(t)
+
 	})
-	
+
 	t.Run("service error", func(t *testing.T) {
-		mockStore := &MockStore{}
+		mockStore := mock_store.NewMockStore(gomock.NewController(t))
 		api := NewPacksAPI(mockStore)
 		ctx := context.Background()
-		
+
 		request := &MockRequest{}
 		response := &MockResponse{}
-		
+
 		expectedError := errors.New("database error")
-		mockStore.On("ListPacks", ctx).Return([]model.Pack{}, expectedError)
+		mockStore.EXPECT().ListPacks(gomock.Any()).Return(nil, expectedError)
 		response.On("InternalServerError", "can't list packs: %s", mock.Anything).Return(expectedError)
-		
+
 		err := api.ListPacks(ctx, request, response)
-		
+
 		assert.Error(t, err)
 		assert.Equal(t, 500, response.statusCode)
-		
+
 		response.AssertExpectations(t)
-		mockStore.AssertExpectations(t)
+
 	})
 }
 
 func TestPacksAPI_GetPackByID(t *testing.T) {
 	t.Run("successful retrieval", func(t *testing.T) {
-		mockStore := &MockStore{}
+		mockStore := mock_store.NewMockStore(gomock.NewController(t))
 		api := NewPacksAPI(mockStore)
 		ctx := context.Background()
-		
+
 		request := &MockRequest{}
 		response := &MockResponse{}
-		
+
 		expectedPack := &model.Pack{
 			ID:          "pack-1",
 			VersionHash: "abc123",
 			TotalAmount: 250,
 		}
-		
+
 		request.On("String", "id", mock.Anything).Return("pack-1")
-		mockStore.On("GetPackByID", ctx, "pack-1").Return(expectedPack, nil)
+		mockStore.EXPECT().GetPackByID(gomock.Any(), "pack-1").Return(expectedPack, nil)
+
 		response.On("OK", expectedPack).Return(nil)
-		
+
 		err := api.GetPackByID(ctx, request, response)
-		
+
 		require.NoError(t, err)
 		assert.Equal(t, 200, response.statusCode)
 		assert.Equal(t, expectedPack, response.data)
-		
+
 		request.AssertExpectations(t)
 		response.AssertExpectations(t)
-		mockStore.AssertExpectations(t)
+
 	})
-	
+
 	t.Run("pack not found", func(t *testing.T) {
-		mockStore := &MockStore{}
+		mockStore := mock_store.NewMockStore(gomock.NewController(t))
 		api := NewPacksAPI(mockStore)
 		ctx := context.Background()
-		
+
 		request := &MockRequest{}
 		response := &MockResponse{}
-		
+
 		request.On("String", "id", mock.Anything).Return("nonexistent")
-		mockStore.On("GetPackByID", ctx, "nonexistent").Return(nil, store.ErrNotFound)
+		mockStore.EXPECT().GetPackByID(gomock.Any(), "nonexistent").Return(nil, store.ErrNotFound)
 		response.On("InternalServerError", "can't get pack by id - %s: %s", mock.Anything).Return(store.ErrNotFound)
-		
+
 		err := api.GetPackByID(ctx, request, response)
-		
+
 		assert.Error(t, err)
 		assert.Equal(t, 500, response.statusCode)
-		
+
 		request.AssertExpectations(t)
 		response.AssertExpectations(t)
-		mockStore.AssertExpectations(t)
+
 	})
 }
 
-func TestPacksAPI_GetPacksByVersionHash(t *testing.T) {
+func TestPacksAPI_GetPackByHash(t *testing.T) {
 	t.Run("successful retrieval", func(t *testing.T) {
-		mockStore := &MockStore{}
+		mockStore := mock_store.NewMockStore(gomock.NewController(t))
 		api := NewPacksAPI(mockStore)
 		ctx := context.Background()
-		
+
 		request := &MockRequest{}
 		response := &MockResponse{}
-		
-		expectedPacks := []model.Pack{
-			{
-				ID:          "pack-1",
-				VersionHash: "abc123",
-				TotalAmount: 250,
-			},
+
+		expectedPack := model.Pack{
+			ID:          "pack-1",
+			VersionHash: "abc123",
+			TotalAmount: 250,
 		}
-		
+
 		request.On("String", "hash", mock.Anything).Return("abc123")
-		mockStore.On("GetPacksInvariantsByHash", ctx, "abc123").Return(expectedPacks, nil)
-		response.On("OK", expectedPacks).Return(nil)
-		
-		err := api.GetPacksByVersionHash(ctx, request, response)
-		
+		mockStore.EXPECT().GetPackByHash(gomock.Any(), "abc123").Return(&expectedPack, nil)
+		response.On("OK", &expectedPack).Return(nil)
+
+		err := api.GetPackByHash(ctx, request, response)
+
 		require.NoError(t, err)
 		assert.Equal(t, 200, response.statusCode)
-		assert.Equal(t, expectedPacks, response.data)
-		
+		assert.Equal(t, &expectedPack, response.data)
+
 		request.AssertExpectations(t)
 		response.AssertExpectations(t)
-		mockStore.AssertExpectations(t)
+
 	})
-	
+
 	t.Run("hash not found", func(t *testing.T) {
-		mockStore := &MockStore{}
+		mockStore := mock_store.NewMockStore(gomock.NewController(t))
 		api := NewPacksAPI(mockStore)
 		ctx := context.Background()
-		
+
 		request := &MockRequest{}
 		response := &MockResponse{}
-		
+
 		request.On("String", "hash", mock.Anything).Return("nonexistent")
-		mockStore.On("GetPacksInvariantsByHash", ctx, "nonexistent").Return([]model.Pack{}, store.ErrNotFound)
+		mockStore.EXPECT().GetPackByHash(gomock.Any(), "nonexistent").Return(nil, store.ErrNotFound)
 		response.On("InternalServerError", "can't get pack by hash - %s: %s", mock.Anything).Return(store.ErrNotFound)
-		
-		err := api.GetPacksByVersionHash(ctx, request, response)
-		
+
+		err := api.GetPackByHash(ctx, request, response)
+
 		assert.Error(t, err)
 		assert.Equal(t, 500, response.statusCode)
-		
+
 		request.AssertExpectations(t)
 		response.AssertExpectations(t)
-		mockStore.AssertExpectations(t)
+
 	})
 }
 
 func TestPacksAPI_DeletePack(t *testing.T) {
 	t.Run("successful deletion", func(t *testing.T) {
-		mockStore := &MockStore{}
+		mockStore := mock_store.NewMockStore(gomock.NewController(t))
 		api := NewPacksAPI(mockStore)
 		ctx := context.Background()
-		
+
 		request := &MockRequest{}
 		response := &MockResponse{}
-		
+
 		request.On("String", "id", mock.Anything).Return("pack-1")
-		mockStore.On("DeletePack", ctx, "pack-1").Return(nil)
+		mockStore.EXPECT().DeletePack(gomock.Any(), "pack-1").Return(nil)
+
 		response.On("NoContent").Return(nil)
-		
+
 		err := api.DeletePack(ctx, request, response)
-		
+
 		require.NoError(t, err)
 		assert.Equal(t, 204, response.statusCode)
-		
+
 		request.AssertExpectations(t)
 		response.AssertExpectations(t)
-		mockStore.AssertExpectations(t)
+
 	})
-	
+
 	t.Run("service error", func(t *testing.T) {
-		mockStore := &MockStore{}
+		mockStore := mock_store.NewMockStore(gomock.NewController(t))
 		api := NewPacksAPI(mockStore)
 		ctx := context.Background()
-		
+
 		request := &MockRequest{}
 		response := &MockResponse{}
-		
+
 		expectedError := errors.New("database error")
 		request.On("String", "id", mock.Anything).Return("pack-1")
-		mockStore.On("DeletePack", ctx, "pack-1").Return(expectedError)
+		mockStore.EXPECT().DeletePack(gomock.Any(), "pack-1").Return(expectedError)
+
 		response.On("InternalServerError", "can't delete pack: %s", mock.Anything).Return(expectedError)
-		
+
 		err := api.DeletePack(ctx, request, response)
-		
+
 		assert.Error(t, err)
 		assert.Equal(t, 500, response.statusCode)
-		
+
 		request.AssertExpectations(t)
 		response.AssertExpectations(t)
-		mockStore.AssertExpectations(t)
+
 	})
 }
 
 func TestPacksAPI_Routes(t *testing.T) {
-	mockStore := &MockStore{}
+	mockStore := mock_store.NewMockStore(gomock.NewController(t))
 	api := NewPacksAPI(mockStore)
-	
+
 	routes := api.Routers()
-	
+
 	// Check that routes are defined
 	assert.NotEmpty(t, routes)
-	
+
 	// We can't easily test the exact route structure without more complex mocking
 	// but we can verify the routes map is not empty
 	assert.Greater(t, len(routes), 0, "should have at least one route defined")
@@ -534,27 +532,28 @@ func TestPacksAPI_Routes(t *testing.T) {
 
 func TestPacksAPI_ContextHandling(t *testing.T) {
 	t.Run("context cancellation", func(t *testing.T) {
-		mockStore := &MockStore{}
+		mockStore := mock_store.NewMockStore(gomock.NewController(t))
 		api := NewPacksAPI(mockStore)
-		
+
 		ctx, cancel := context.WithCancel(context.Background())
 		cancel() // Cancel immediately
-		
+
 		request := &MockRequest{}
 		response := &MockResponse{}
-		
+
 		// Mock the behavior for cancelled context
 		request.On("Body").Return(&model.CreatePacksRequest{Packs: []int64{250}})
-		mockStore.On("SavePacks", ctx, mock.AnythingOfType("[]model.Pack"), mock.AnythingOfType("string")).Return(context.Canceled)
+		mockStore.EXPECT().SavePacks(gomock.Any(), gomock.Any()).
+			Return(context.Canceled)
 		response.On("InternalServerError", "can't create packs: %s", mock.Anything).Return(context.Canceled)
-		
+
 		err := api.CreatePacks(ctx, request, response)
-		
+
 		assert.Error(t, err)
 		assert.Equal(t, context.Canceled, err)
-		
+
 		request.AssertExpectations(t)
 		response.AssertExpectations(t)
-		mockStore.AssertExpectations(t)
+
 	})
 }
