@@ -38,7 +38,6 @@ func TestPackService_CreatePacks(t *testing.T) {
 		require.NoError(t, err)
 		assert.NotEmpty(t, versionHash)
 		assert.Len(t, versionHash, 16) // Hash is truncated to 16 characters
-
 	})
 
 	t.Run("store error", func(t *testing.T) {
@@ -58,7 +57,6 @@ func TestPackService_CreatePacks(t *testing.T) {
 		assert.Error(t, err)
 		assert.Equal(t, expectedError, err)
 		assert.Empty(t, versionHash)
-
 	})
 
 	t.Run("empty packs", func(t *testing.T) {
@@ -74,7 +72,6 @@ func TestPackService_CreatePacks(t *testing.T) {
 
 		require.NoError(t, err)
 		assert.NotEmpty(t, versionHash)
-
 	})
 
 	t.Run("single pack", func(t *testing.T) {
@@ -90,7 +87,6 @@ func TestPackService_CreatePacks(t *testing.T) {
 
 		require.NoError(t, err)
 		assert.NotEmpty(t, versionHash)
-
 	})
 }
 
@@ -115,7 +111,6 @@ func TestPackService_GetPackByID(t *testing.T) {
 
 		require.NoError(t, err)
 		assert.Equal(t, expectedPack, result)
-
 	})
 
 	t.Run("pack not found", func(t *testing.T) {
@@ -130,7 +125,6 @@ func TestPackService_GetPackByID(t *testing.T) {
 		assert.Error(t, err)
 		assert.Equal(t, store.ErrNotFound, err)
 		assert.Nil(t, result)
-
 	})
 }
 
@@ -159,7 +153,6 @@ func TestPackService_ListPacks(t *testing.T) {
 
 		require.NoError(t, err)
 		assert.Equal(t, expectedPacks, result)
-
 	})
 
 	t.Run("empty list", func(t *testing.T) {
@@ -173,7 +166,6 @@ func TestPackService_ListPacks(t *testing.T) {
 
 		require.NoError(t, err)
 		assert.Empty(t, result)
-
 	})
 
 	t.Run("store error", func(t *testing.T) {
@@ -190,7 +182,6 @@ func TestPackService_ListPacks(t *testing.T) {
 		assert.Error(t, err)
 		assert.Equal(t, expectedError, err)
 		assert.Empty(t, result)
-
 	})
 }
 
@@ -205,7 +196,6 @@ func TestPackService_DeletePack(t *testing.T) {
 		err := service.DeletePack(ctx, "pack-1")
 
 		require.NoError(t, err)
-
 	})
 
 	t.Run("store error", func(t *testing.T) {

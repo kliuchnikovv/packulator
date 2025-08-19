@@ -45,7 +45,7 @@ func (c *PacksAPI) Middlewares() []engi.Middleware {
 
 // Routers defines the available pack management routes:
 // POST /packs/create - Create new pack configuration
-// GET /packs/list - List all available packs  
+// GET /packs/list - List all available packs
 // GET /packs/id - Get specific pack by ID
 // GET /packs/hash - Get packs by version hash
 // DELETE /packs/delete - Delete pack configuration
@@ -78,10 +78,9 @@ func (c *PacksAPI) CreatePacks(
 	request engi.Request,
 	response engi.Response,
 ) error {
-	var body = request.Body().(*model.CreatePacksRequest)
-
-	if len(body.Packs) == 0 {
-		return response.InternalServerError("packs can't be empty")
+	body, ok := request.Body().(*model.CreatePacksRequest)
+	if !ok || len(body.Packs) == 0 {
+		return response.BadRequest("packs can't be empty")
 	}
 
 	versionHash, err := c.packService.CreatePacks(ctx, body.Packs...)

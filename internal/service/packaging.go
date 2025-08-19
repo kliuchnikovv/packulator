@@ -4,13 +4,13 @@ import (
 	"context"
 	"errors"
 	"maps"
-	"sort"
+	"slices"
 )
 
 type variant struct {
+	combination   map[int64]int64
 	numberOfPacks int64
 	overshoot     int64
-	combination   map[int64]int64
 }
 
 func NumberOfPacks(
@@ -22,13 +22,11 @@ func NumberOfPacks(
 		return map[int64]int64{}, nil
 	}
 
-	sort.Slice(packs, func(i, j int) bool {
-		return packs[i] < packs[j]
-	})
+	slices.Sort(packs)
 
 	var (
-		max      = amount + packs[len(packs)-1]
-		variants = make([]*variant, max+1)
+		maxRange = amount + packs[len(packs)-1]
+		variants = make([]*variant, maxRange+1)
 	)
 
 	variants[0] = &variant{
@@ -38,7 +36,7 @@ func NumberOfPacks(
 	}
 
 	// Dynamic programming: build all possible combinations
-	for sum := int64(0); sum <= max; sum++ {
+	for sum := int64(0); sum <= maxRange; sum++ {
 		if variants[sum] == nil {
 			continue
 		}
@@ -46,7 +44,7 @@ func NumberOfPacks(
 		// Try adding each available pack size
 		for _, pack := range packs {
 			var newSum = sum + pack
-			if newSum > max {
+			if newSum > maxRange {
 				break // Optimization: packs are sorted, so we can break early
 			}
 			current := variants[sum]
@@ -70,7 +68,7 @@ func NumberOfPacks(
 		}
 	}
 
-	var result = getOptimalVariant(amount, max, variants)
+	var result = getOptimalVariant(amount, maxRange, variants)
 	if result == nil {
 		return nil, errors.New("could not find a valid combination")
 	}
@@ -78,9 +76,9 @@ func NumberOfPacks(
 	return result.combination, nil
 }
 
-func getOptimalVariant(amount, max int64, variants []*variant) *variant {
+func getOptimalVariant(amount, maxRange int64, variants []*variant) *variant {
 	var result *variant
-	for s := amount; s <= max; s++ {
+	for s := amount; s <= maxRange; s++ {
 		if variants[s] == nil {
 			continue
 		}

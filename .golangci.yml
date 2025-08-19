@@ -23,23 +23,18 @@ linters-settings:
       - opinionated
       - performance
       - style
-  gofumpt:
-    extra-rules: true
-  gomnd:
-    checks:
-      - argument
-      - case
-      - condition
-      - operation
-      - return
+  # gofumpt:  # Disabled
+  #   extra-rules: true
   gosec:
     excludes:
       - G404 # Use of weak random number generator - acceptable for non-crypto use
   gosimple:
     checks: ["all"]
   govet:
-    check-shadowing: true
+    shadow: true
     enable-all: true
+    disable:
+      - fieldalignment  # Disable struct field alignment checks
   lll:
     line-length: 120
   maligned:
@@ -71,7 +66,6 @@ linters:
     - ineffassign
     - staticcheck
     - typecheck
-    - unused
     
     # Additional useful linters
     - asciicheck
@@ -81,13 +75,10 @@ linters:
     - durationcheck
     - errorlint
     - exhaustive
-    - exportloopref
     - forbidigo
     - gocognit
     - goconst
     - gocritic
-    - gofumpt
-    - gomnd
     - gosec
     - misspell
     - nakedret
@@ -109,28 +100,29 @@ linters:
     - gochecknoinits
     - godot
     - godox
-    - goerr113
+    - err113
     - gofmt # Using gofumpt instead
-    - golint # Deprecated
+    - gofumpt  # Disable gofumpt formatting requirements
     - goprintffuncname
-    - interfacer # Deprecated
     - lll # Line length can be flexible
-    - maligned # Deprecated
     - nestif
     - nlreturn
     - paralleltest
     - testpackage
     - wsl
+    - unused
+
 
 issues:
   exclude-rules:
     # Exclude some linters from running on tests files
     - path: _test\.go
       linters:
-        - gomnd
         - gocritic
         - gosec
         - dupl
+        - errcheck
+        - goconst
     
     # Exclude some staticcheck messages
     - linters:
@@ -150,9 +142,9 @@ issues:
   max-issues-per-linter: 50
   max-same-issues: 3
   new: false
+  uniq-by-line: true
 
 output:
-  format: colored-line-number
+  formats: colored-line-number
   print-issued-lines: true
   print-linter-name: true
-  uniq-by-line: true

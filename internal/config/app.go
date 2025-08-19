@@ -10,7 +10,7 @@ import (
 // AppConfig holds the complete application configuration
 type AppConfig struct {
 	Server   ServerConfig      // HTTP server configuration
-	Database DatabaseConfig   // Database connection configuration
+	Database DatabaseConfig    // Database connection configuration
 	App      ApplicationConfig // Application-specific settings
 }
 

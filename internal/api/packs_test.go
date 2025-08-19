@@ -59,7 +59,7 @@ func (m *MockStore) HealthCheck(ctx context.Context) error {
 type MockResponse struct {
 	mock.Mock
 	statusCode int
-	data       interface{}
+	data       any
 }
 
 func (m *MockResponse) OK(data interface{}) error {
@@ -147,7 +147,6 @@ func (m *MockResponse) MethodNotAllowed(format string, args ...interface{}) erro
 // Mock request for testing
 type MockRequest struct {
 	mock.Mock
-	body interface{}
 }
 
 func (m *MockRequest) Body() interface{} {
@@ -299,7 +298,6 @@ func TestPacksAPI_CreatePacks(t *testing.T) {
 
 		request.AssertExpectations(t)
 		response.AssertExpectations(t)
-
 	})
 }
 
@@ -335,7 +333,6 @@ func TestPacksAPI_ListPacks(t *testing.T) {
 		assert.Equal(t, expectedPacks, response.data)
 
 		response.AssertExpectations(t)
-
 	})
 
 	t.Run("service error", func(t *testing.T) {
@@ -356,7 +353,6 @@ func TestPacksAPI_ListPacks(t *testing.T) {
 		assert.Equal(t, 500, response.statusCode)
 
 		response.AssertExpectations(t)
-
 	})
 }
 
@@ -388,7 +384,6 @@ func TestPacksAPI_GetPackByID(t *testing.T) {
 
 		request.AssertExpectations(t)
 		response.AssertExpectations(t)
-
 	})
 
 	t.Run("pack not found", func(t *testing.T) {
@@ -410,7 +405,6 @@ func TestPacksAPI_GetPackByID(t *testing.T) {
 
 		request.AssertExpectations(t)
 		response.AssertExpectations(t)
-
 	})
 }
 
@@ -441,7 +435,6 @@ func TestPacksAPI_GetPackByHash(t *testing.T) {
 
 		request.AssertExpectations(t)
 		response.AssertExpectations(t)
-
 	})
 
 	t.Run("hash not found", func(t *testing.T) {
@@ -463,7 +456,6 @@ func TestPacksAPI_GetPackByHash(t *testing.T) {
 
 		request.AssertExpectations(t)
 		response.AssertExpectations(t)
-
 	})
 }
 
@@ -488,7 +480,6 @@ func TestPacksAPI_DeletePack(t *testing.T) {
 
 		request.AssertExpectations(t)
 		response.AssertExpectations(t)
-
 	})
 
 	t.Run("service error", func(t *testing.T) {
@@ -512,7 +503,6 @@ func TestPacksAPI_DeletePack(t *testing.T) {
 
 		request.AssertExpectations(t)
 		response.AssertExpectations(t)
-
 	})
 }
 
@@ -541,7 +531,7 @@ func TestPacksAPI_ContextHandling(t *testing.T) {
 		request := &MockRequest{}
 		response := &MockResponse{}
 
-		// Mock the behavior for cancelled context
+		// Mock the behavior for canceled context
 		request.On("Body").Return(&model.CreatePacksRequest{Packs: []int64{250}})
 		mockStore.EXPECT().SavePacks(gomock.Any(), gomock.Any()).
 			Return(context.Canceled)
@@ -554,6 +544,5 @@ func TestPacksAPI_ContextHandling(t *testing.T) {
 
 		request.AssertExpectations(t)
 		response.AssertExpectations(t)
-
 	})
 }

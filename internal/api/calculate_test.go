@@ -110,7 +110,6 @@ func TestPackagingService_NumberOfPackages(t *testing.T) {
 
 		request.AssertExpectations(t)
 		response.AssertExpectations(t)
-
 	})
 
 	t.Run("store error", func(t *testing.T) {
@@ -140,7 +139,6 @@ func TestPackagingService_NumberOfPackages(t *testing.T) {
 
 		request.AssertExpectations(t)
 		response.AssertExpectations(t)
-
 	})
 
 	t.Run("zero amount", func(t *testing.T) {
@@ -182,7 +180,6 @@ func TestPackagingService_NumberOfPackages(t *testing.T) {
 
 		request.AssertExpectations(t)
 		response.AssertExpectations(t)
-
 	})
 
 	t.Run("large amount", func(t *testing.T) {
@@ -232,7 +229,6 @@ func TestPackagingService_NumberOfPackages(t *testing.T) {
 
 		request.AssertExpectations(t)
 		response.AssertExpectations(t)
-
 	})
 }
 
@@ -286,10 +282,9 @@ func TestPackagingService_ContextHandling(t *testing.T) {
 
 		request.AssertExpectations(t)
 		response.AssertExpectations(t)
-
 	})
 
-	t.Run("cancelled context", func(t *testing.T) {
+	t.Run("canceled context", func(t *testing.T) {
 		mockStore := mock_store.NewMockStore(gomock.NewController(t))
 		api := NewPackagingService(mockStore)
 
@@ -305,7 +300,7 @@ func TestPackagingService_ContextHandling(t *testing.T) {
 		request.On("Integer", "amount", mock.Anything).Return(amount)
 		request.On("String", "packs_hash", mock.Anything).Return(versionHash)
 
-		// Mock store to return context cancelled error
+		// Mock store to return context canceled error
 		mockStore.EXPECT().GetPackByHash(gomock.Any(), versionHash).Return(nil, context.Canceled)
 		response.On("InternalServerError", mock.Anything, mock.Anything).Return(context.Canceled)
 
@@ -316,7 +311,6 @@ func TestPackagingService_ContextHandling(t *testing.T) {
 
 		request.AssertExpectations(t)
 		response.AssertExpectations(t)
-
 	})
 }
 
@@ -345,7 +339,6 @@ func TestPackagingService_EdgeCases(t *testing.T) {
 
 		request.AssertExpectations(t)
 		response.AssertExpectations(t)
-
 	})
 
 	t.Run("negative amount", func(t *testing.T) {
@@ -388,6 +381,5 @@ func TestPackagingService_EdgeCases(t *testing.T) {
 
 		request.AssertExpectations(t)
 		response.AssertExpectations(t)
-
 	})
 }

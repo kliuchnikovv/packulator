@@ -11,8 +11,8 @@ import (
 func TestCreatePacksRequest_JSONMarshaling(t *testing.T) {
 	tests := []struct {
 		name     string
-		request  CreatePacksRequest
 		expected string
+		request  CreatePacksRequest
 	}{
 		{
 			name: "empty packs",

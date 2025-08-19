@@ -48,7 +48,7 @@ func (s *packService) CreatePacks(ctx context.Context, packs ...int64) (string, 
 		VersionHash: generateVersionHash(packs),
 		PackItems:   make([]model.PackItem, len(packs)),
 	}
-	
+
 	// Create pack items for each provided size
 	for i, size := range packs {
 		pack.TotalAmount += size
@@ -99,7 +99,7 @@ func generateVersionHash(packs []int64) string {
 	// Generate SHA-256 hash from sorted pack sizes
 	hash := sha256.New()
 	for _, pack := range sorted {
-		hash.Write([]byte(fmt.Sprintf("%d,", pack)))
+		hash.Write(fmt.Appendf(nil, "%d,", pack))
 	}
 
 	// Return first 16 characters of hex-encoded hash

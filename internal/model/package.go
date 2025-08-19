@@ -11,13 +11,13 @@ import (
 // Pack represents a pack configuration with its associated pack sizes.
 // Each pack configuration has a unique version hash and contains multiple pack items.
 type Pack struct {
-	ID          string         `json:"id" gorm:"primaryKey"`               // Unique identifier for the pack
-	VersionHash string         `json:"version_hash" gorm:"index;not null"` // Version hash for pack configuration
-	TotalAmount int64          `json:"total_amount" gorm:"not null"`       // Total amount that can be packed
+	ID          string         `json:"id" gorm:"primaryKey"`                // Unique identifier for the pack
+	VersionHash string         `json:"version_hash" gorm:"index;not null"`  // Version hash for pack configuration
+	TotalAmount int64          `json:"total_amount" gorm:"not null"`        // Total amount that can be packed
 	PackItems   []PackItem     `json:"pack_items" gorm:"foreignKey:PackID"` // Associated pack items with sizes
-	CreatedAt   time.Time      `json:"created_at"`                        // Timestamp when pack was created
-	UpdatedAt   time.Time      `json:"updated_at"`                        // Timestamp when pack was last updated
-	DeletedAt   gorm.DeletedAt `json:"-" gorm:"index"`                     // Soft delete timestamp
+	CreatedAt   time.Time      `json:"created_at"`                          // Timestamp when pack was created
+	UpdatedAt   time.Time      `json:"updated_at"`                          // Timestamp when pack was last updated
+	DeletedAt   gorm.DeletedAt `json:"-" gorm:"index"`                      // Soft delete timestamp
 }
 
 // PackItem represents an individual pack size within a pack configuration.

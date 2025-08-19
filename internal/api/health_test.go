@@ -1,11 +1,9 @@
 package api
 
 import (
-	"context"
 	"net/http"
 	"testing"
 
-	"github.com/kliuchnikovv/packulator/internal/model"
 	mock_store "github.com/kliuchnikovv/packulator/internal/store/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -49,48 +47,6 @@ func TestHealthStatus_Struct(t *testing.T) {
 	assert.Equal(t, "ok", status.Status)
 	assert.Equal(t, "ok", status.Database)
 	assert.Equal(t, "1.0.0", status.Version)
-}
-
-type mockStore struct {
-	mock.Mock
-}
-
-func (m *mockStore) GetPacksInvariantsByHash(ctx context.Context, versionHash string) ([]model.Pack, error) {
-	args := m.Called(ctx, versionHash)
-	return args.Get(0).([]model.Pack), args.Error(1)
-}
-
-func (m *mockStore) SavePack(ctx context.Context, pack *model.Pack) error {
-	args := m.Called(ctx, pack)
-	return args.Error(0)
-}
-
-func (m *mockStore) SavePacks(ctx context.Context, packs []model.Pack, versionHash string) error {
-	args := m.Called(ctx, packs, versionHash)
-	return args.Error(0)
-}
-
-func (m *mockStore) GetPackByID(ctx context.Context, id string) (*model.Pack, error) {
-	args := m.Called(ctx, id)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*model.Pack), args.Error(1)
-}
-
-func (m *mockStore) ListPacks(ctx context.Context) ([]model.Pack, error) {
-	args := m.Called(ctx)
-	return args.Get(0).([]model.Pack), args.Error(1)
-}
-
-func (m *mockStore) DeletePack(ctx context.Context, id string) error {
-	args := m.Called(ctx, id)
-	return args.Error(0)
-}
-
-func (m *mockStore) HealthCheck(ctx context.Context) error {
-	args := m.Called(ctx)
-	return args.Error(0)
 }
 
 type mockResponse struct {

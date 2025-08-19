@@ -16,8 +16,8 @@ func TestNumberOfPacks(t *testing.T) {
 	)
 
 	cases := []struct {
-		amount   int64
 		expected map[int64]int64
+		amount   int64
 	}{
 		{
 			amount: 1,
@@ -185,7 +185,7 @@ func TestNumberOfPacks_ContextHandling(t *testing.T) {
 		assert.NotEmpty(t, result)
 	})
 
-	t.Run("cancelled context", func(t *testing.T) {
+	t.Run("canceled context", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		cancel() // Cancel immediately
 
@@ -204,9 +204,8 @@ func BenchmarkNumberOfPacks_Small(b *testing.B) {
 	ctx := context.Background()
 	packs := []int64{250, 500, 1000, 2000, 5000}
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_, _ = NumberOfPacks(ctx, 1000, packs)
+	for b.Loop() {
+		NumberOfPacks(ctx, 1000, packs)
 	}
 }
 
@@ -214,9 +213,8 @@ func BenchmarkNumberOfPacks_Large(b *testing.B) {
 	ctx := context.Background()
 	packs := []int64{250, 500, 1000, 2000, 5000}
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_, _ = NumberOfPacks(ctx, 50000, packs)
+	for b.Loop() {
+		NumberOfPacks(ctx, 50000, packs)
 	}
 }
 
@@ -226,8 +224,7 @@ func BenchmarkNumberOfPacks_Manypacks(b *testing.B) {
 	// Create more packs for a more complex scenario
 	packs := []int64{10, 25, 50, 100, 250, 500, 750, 1000, 1500, 2000, 3000, 5000}
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_, _ = NumberOfPacks(ctx, 10000, packs)
+	for b.Loop() {
+		NumberOfPacks(ctx, 10000, packs)
 	}
 }

@@ -112,8 +112,8 @@ func TestAppConfig_ServerAddress(t *testing.T) {
 	tests := []struct {
 		name     string
 		host     string
-		port     int
 		expected string
+		port     int
 	}{
 		{
 			name:     "default values",
