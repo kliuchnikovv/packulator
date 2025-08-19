@@ -167,17 +167,51 @@ Environment variables:
 
 ## 📊 Algorithm
 
-The pack calculation uses a greedy algorithm optimized for minimal pack count:
+The pack calculation uses a **dynamic programming algorithm** optimized for minimal overshoot and pack count:
 
-1. **Sort packs** by size (largest first)
-2. **Greedy selection** - use largest packs that fit
-3. **Optimization** - minimize total pack count
-4. **Validation** - ensure complete coverage of order amount
+### Algorithm Overview
+1. **Dynamic Programming Table** - Build all possible pack combinations up to `amount + largest_pack`
+2. **Optimal Selection** - For each sum, keep the variant with:
+   - **Primary**: Minimal overshoot (excess over target amount)  
+   - **Secondary**: Minimal pack count (when overshoot is equal)
+3. **Result Selection** - Choose the best variant among all sums ≥ target amount
 
-Example for amount 1001 with packs [250, 500, 1000]:
-- 1000 × 1 = 1000 (remainder: 1)  
-- 250 × 1 = 250 (remainder: 0)
-- **Result**: {1000: 1, 250: 1} = 1250 items in 2 packs
+### Implementation Details
+```go
+// Each variant tracks:
+type variant struct {
+    numberOfPacks int64            // Total packs used
+    overshoot     int64            // Amount exceeding target (sum - amount)
+    combination   map[int64]int64  // Pack size → quantity mapping
+}
+
+// Priority function: less overshoot wins, then fewer packs
+func isBetter(left, right *variant) bool {
+    if left.overshoot < right.overshoot {
+        return true
+    } else if left.overshoot > right.overshoot {
+        return false
+    }
+    return left.numberOfPacks < right.numberOfPacks
+}
+```
+
+### Example Calculation
+For **amount = 1001** with **packs = [250, 500, 1000]**:
+
+**Step 1**: Build all combinations from 0 to 2001 (1001 + 1000)
+**Step 2**: Find optimal variants for sums ≥ 1001:
+- Sum 1250: {250: 1, 1000: 1} → overshoot = 249, packs = 2 ✅
+- Sum 1500: {500: 3} → overshoot = 499, packs = 3  
+- Sum 1750: {250: 3, 1000: 1} → overshoot = 749, packs = 4
+
+**Result**: `{250: 1, 1000: 1}` = **2 packs with minimal overshoot of 249**
+
+### Algorithm Benefits
+- **Guaranteed Optimal**: Always finds the solution with minimal overshoot
+- **Deterministic**: Same input always produces same output  
+- **Efficient**: O(amount × pack_count) time complexity
+- **Flexible**: Works with any pack size combination
 
 ## 🧪 Testing & CI/CD
 
@@ -211,8 +245,6 @@ The project uses GitHub Actions for continuous integration:
 - ✅ **Security** - Gosec and Nancy vulnerability scanning  
 - ✅ **Build** - Multi-architecture builds (Linux, macOS, Windows)
 - ✅ **Coverage** - Automatic coverage reporting to Codecov
-
-See [CI Documentation](.github/README-CI.md) for detailed setup information.
 
 ## 🤝 Contributing
 
