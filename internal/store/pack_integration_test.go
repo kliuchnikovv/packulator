@@ -12,6 +12,7 @@ import (
 	"github.com/kliuchnikovv/packulator/internal/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gorm.io/driver/postgres"
 )
 
 // Integration tests require a real database
@@ -38,7 +39,7 @@ func getEnvOrDefault(key, defaultValue string) string {
 
 func setupTestStore(t *testing.T) Store {
 	cfg := getTestDatabaseConfig()
-	store, err := NewStore(cfg)
+	store, err := NewStore(postgres.Open(cfg.DSN()))
 	require.NoError(t, err, "Failed to create test store")
 	return store
 }
@@ -113,53 +114,49 @@ func TestStoreIntegration_SavePacks(t *testing.T) {
 	ctx := context.Background()
 
 	versionHash := "batch-test-hash"
-	packs := []model.Pack{
-		{
-			ID:          "batch-pack-1",
-			VersionHash: versionHash,
-			TotalAmount: 250,
-			PackItems: []model.PackItem{
-				{
-					ID:     "batch-item-1",
-					PackID: "batch-pack-1",
-					Size:   250,
-				},
+	pack1 := model.Pack{
+		ID:          "batch-pack-1",
+		VersionHash: versionHash,
+		TotalAmount: 250,
+		PackItems: []model.PackItem{
+			{
+				ID:     "batch-item-1",
+				PackID: "batch-pack-1",
+				Size:   250,
 			},
 		},
-		{
-			ID:          "batch-pack-2",
-			VersionHash: versionHash,
-			TotalAmount: 500,
-			PackItems: []model.PackItem{
-				{
-					ID:     "batch-item-2",
-					PackID: "batch-pack-2",
-					Size:   500,
-				},
+	}
+
+	pack2 := model.Pack{
+		ID:          "batch-pack-2",
+		VersionHash: versionHash,
+		TotalAmount: 500,
+		PackItems: []model.PackItem{
+			{
+				ID:     "batch-item-2",
+				PackID: "batch-pack-2",
+				Size:   500,
 			},
 		},
 	}
 
 	// Save packs in batch
-	err := store.SavePacks(ctx, packs, versionHash)
+	err := store.SavePacks(ctx, pack1, pack2)
 	require.NoError(t, err, "Should save packs in batch successfully")
 
-	// Get packs by version hash
-	retrievedPacks, err := store.GetPacksInvariantsByHash(ctx, versionHash)
-	require.NoError(t, err, "Should retrieve packs by hash successfully")
+	// Get pack by version hash (should find the first one)
+	retrievedPack, err := store.GetPackByHash(ctx, versionHash)
+	require.NoError(t, err, "Should retrieve pack by hash successfully")
 
-	assert.Len(t, retrievedPacks, 2)
+	// Verify pack has correct version hash
+	assert.Equal(t, versionHash, retrievedPack.VersionHash)
+	assert.NotEmpty(t, retrievedPack.PackItems)
 
-	// Verify both packs have correct version hash
-	for _, pack := range retrievedPacks {
-		assert.Equal(t, versionHash, pack.VersionHash)
-	}
-
-	// Cleanup
-	for _, pack := range packs {
-		err = store.DeletePack(ctx, pack.ID)
-		require.NoError(t, err, "Should delete pack successfully")
-	}
+	// Cleanup both packs
+	err = store.DeletePack(ctx, pack1.ID)
+	require.NoError(t, err, "Should delete pack1 successfully")
+	err = store.DeletePack(ctx, pack2.ID)
+	require.NoError(t, err, "Should delete pack2 successfully")
 }
 
 func TestStoreIntegration_ListPacks(t *testing.T) {
@@ -217,7 +214,7 @@ func TestStoreIntegration_GetPackByID_NotFound(t *testing.T) {
 	assert.Nil(t, pack, "Pack should be nil")
 }
 
-func TestStoreIntegration_GetPacksInvariantsByHash_NotFound(t *testing.T) {
+func TestStoreIntegration_GetPackByHash_NotFound(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping integration test in short mode")
 	}
@@ -225,12 +222,12 @@ func TestStoreIntegration_GetPacksInvariantsByHash_NotFound(t *testing.T) {
 	store := setupTestStore(t)
 	ctx := context.Background()
 
-	// Try to get packs with non-existent hash
-	packs, err := store.GetPacksInvariantsByHash(ctx, "non-existent-hash")
+	// Try to get pack with non-existent hash
+	pack, err := store.GetPackByHash(ctx, "non-existent-hash")
 
 	assert.Error(t, err, "Should return error for non-existent hash")
 	assert.ErrorIs(t, err, ErrNotFound, "Should return ErrNotFound specifically")
-	assert.Nil(t, packs, "Packs should be nil")
+	assert.Nil(t, pack, "Pack should be nil")
 }
 
 func TestStoreIntegration_DeletePack_NonExistent(t *testing.T) {

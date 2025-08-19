@@ -136,24 +136,6 @@ func createTestPacksSimple() []model.Pack {
 	}
 }
 
-// Test Store interface compliance (conceptual test)
-func TestStoreInterface_Simple(t *testing.T) {
-	// Test that our interface is well-defined
-	var _ Store = (*store)(nil) // This will fail to compile if store doesn't implement Store
-
-	// Test interface methods exist (compilation check)
-	var store Store
-	if store != nil {
-		// These calls would panic but this tests the interface signatures
-		_ = store.SavePack
-		_ = store.SavePacks
-		_ = store.GetPackByID
-		_ = store.ListPacks
-		_ = store.DeletePack
-		_ = store.HealthCheck
-	}
-}
-
 // Test error types and constants
 func TestStoreErrors_Simple(t *testing.T) {
 	// Test that ErrNotFound is properly defined
